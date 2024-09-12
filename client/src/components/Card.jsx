@@ -1,29 +1,23 @@
+import React from 'react';
 
-// src/App.js or any other component
-import React, { useEffect, useState } from 'react';
-
-const Card = () => {
-    const [products, setProducts] = useState([]);
-
-    useEffect(() => {
-      fetch('http://localhost:3001/products')
-            .then(response => response.json())
-            .then(data => setProducts(data))
-            .catch(error => console.error('Error:', error));
-    }, []);
-
-    return (
-        <div>
-            <h1>Product List</h1>
-            <ul>
-                {products.map(product => (
-                    <li key={product.product_id}>
-                        {product.product_name} - ${product.product_price}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+const Card = ({ product }) => {
+  return (
+    <div className="bg-orange-200 p-4 rounded-lg shadow-md max-w-xs m-2 w-64 h-70">
+      <img 
+        src={product.image_url} 
+        alt={product.name} 
+        className="w-full h-48 object-cover rounded-t-lg"
+      />
+      <div className="p-4">
+        <h2 className="text-lg font-bold">{product.name}</h2>
+        {/* <p className="text-sm text-gray-500">{product.info}</p> */}
+        <p className="text-xl font-semibold my-2">${product.price}</p>
+        <button className="bg-m500 text-white py-2 px-4 rounded-md">
+          Add to cart
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Card;
