@@ -11,13 +11,16 @@
 
 // import LandingPage from "./pages/LandingPage";
 
-import PaymentForm from "./components/PaymentForm";
+// import PaymentForm from "./components/PaymentForm";
+
+import OrderTrack from "./components/OrderTrack";
 
 function App() {
   return (
     // <Login/>
     // <LandingPage/>
-    <PaymentForm/>
+    // <PaymentForm/>
+    <OrderTrack/>
      
   );
 }
