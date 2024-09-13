@@ -1,4 +1,39 @@
+<<<<<<< HEAD
 /* src/input.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+=======
+/* src/input.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.navList > li {
+  @apply text-y500; /* Applying Tailwind utility class directly in your CSS */
+}
+
+.trackSection {
+  width: 1100px;
+  height: 800px;
+}
+
+.stages {
+  width: 400px;
+  height: 800px;
+}
+
+.orderDetail {
+  width: 700px;
+  height: auto;
+}
+
+.proImg {
+  width: 600px;
+  height: 400px;
+}
+
+.trackDetails {
+  width: 1100px;
+}
+>>>>>>> pages
