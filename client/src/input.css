@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-/* src/input.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-=======
+
 /* src/input.css */
 @tailwind base;
 @tailwind components;
@@ -36,4 +31,3 @@
 .trackDetails {
   width: 1100px;
 }
->>>>>>> pages

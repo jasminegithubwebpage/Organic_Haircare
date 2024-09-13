@@ -1,91 +1,41 @@
-<<<<<<< HEAD
 // src/components/Header.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 function Header() {
   return (
-    <header className="py-4 text-lg font-Roboto">
-      <div className="container mx-auto flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex items-center">
-          <img 
-            src="https://via.placeholder.com/100x50.png?text=Logo" 
-            alt="Organic Hair Care Solutions Logo"
-            className="h-10 mr-4"
-          />
-          <h1 className="text-4xl font-bold font-Roboto ml-20">Organic Hair Care Solutions</h1>
-        </div>
-
-        {/* Navigation Links */}
-        <nav>
-          <ul className="flex space-x-4">
-            <li>
-              <Link to="/" className="text-black-500 hover:text-blue-700">Home</Link>
-            </li>
-            <li>
-              <Link to="/about" className="text-black-500 hover:text-blue-700">About</Link>
-            </li>
-            <li>
-              <Link to="/contact" className="text-black-500 hover:text-blue-700">Contact</Link>
-            </li>
-            <li>
-              <Link to="/products" className="text-black-500 hover:text-blue-700">Products</Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-export default Header;
-=======
-// src/components/Header.jsx
-import React from 'react';
-// import { Link } from 'react-router-dom';
-
-function Header() {
-  return (
-    <header className="container-md bg-m500 py-4 text-lg font-Roboto">
+    <header className="container-md bg-m500 py-4 text-lg font-Roboto text-white">
       <div className="flex justify-around  items-center">
         {/* Logo */}
         <div className="flex items-center">
-          <img 
+          {/* <img 
             src="#" 
             alt="Organic Hair Care Solutions Logo"
             className="h-10 mr-4"
-          />
+          /> */}
           <h1 className="text-4xl font-bold font-Roboto ml-20">Organic Hair Care Solutions</h1>
         </div>
 
         {/* Navigation Links */}
         <nav>
-          <ul className="flex space-x-4 navList">
-            <li>
-              {/* <Link to="#" className="text-black-500 hover:text-blue-700">Home</Link> */}
-              <p className="text-black-500 hover:text-blue-700">Home</p>
-            </li>
-            <li>
-              {/* <Link to="#" className="text-black-500 hover:text-blue-700">About</Link> */}
-              <p className="text-black-500 hover:text-blue-700">About</p>
-
-            </li>
-            <li>
-              {/* <Link to="#" className="text-black-500 hover:text-blue-700">Contact</Link> */}
-              <p className="text-black-500 hover:text-blue-700">Contact</p>
-
-            </li>
-            <li>
-              {/* <Link to="#" className="text-black-500 hover:text-blue-700">Products</Link> */}
-              <p className="text-black-500 hover:text-blue-700">Product</p>
-
-            </li>
-          </ul>
-        </nav>
+      <ul className="flex space-x-4 navList">
+        <li>
+          <Link to="/" className="text-black-500 hover:text-blue-700">Home</Link>
+        </li>
+        <li>
+          <Link to="/about" className="text-black-500 hover:text-blue-700">About</Link>
+        </li>
+        <li>
+          <Link to="/contact" className="text-black-500 hover:text-blue-700">Contact</Link>
+        </li>
+        <li>
+          <Link to="/products" className="text-black-500 hover:text-blue-700">Product</Link>
+        </li>
+      </ul>
+    </nav>
 
         {/* icon */}
-        <div className="flex items-center">
+        {/* <div className="flex items-center">
           <img 
             src="#" 
             alt="Organic Hair Care Solutions icon1"
@@ -101,7 +51,7 @@ function Header() {
             alt="Organic Hair Care Solutions icon1"
             className="h-10 mr-4"
           />
-        </div>
+        </div> */}
 
 
       </div>
@@ -110,4 +60,5 @@ function Header() {
 }
 
 export default Header;
->>>>>>> pages
+
+

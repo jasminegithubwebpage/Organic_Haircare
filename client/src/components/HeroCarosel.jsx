@@ -16,8 +16,8 @@ function HeroCarousel() {
 
   const images = [
     { src: '/assets/images/backgrounds/b (14).webp', alt: '1st slide' },
-    { src: '/assets/images/backgrounds/b (5).jpg', alt: 'Second slide' },
-    { src: '/assets/images/backgrounds/b (4).jpg', alt: 'Third slide' },
+    { src: '/assets/images/backgrounds/b (14).webp', alt: 'Second slide' },
+    { src: '/assets/images/backgrounds/b (14).webp', alt: 'Third slide' },
   ];
 
   return (
