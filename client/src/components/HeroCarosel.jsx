@@ -15,20 +15,19 @@ function HeroCarousel() {
   };
 
   const images = [
-    { src: '/assets/images/backgrounds/b (14).webp', alt: '1st slide' },
-    { src: '/assets/images/backgrounds/b (14).webp', alt: 'Second slide' },
-    { src: '/assets/images/backgrounds/b (14).webp', alt: 'Third slide' },
+    { src: '/assets/images/backgrounds/t1.webp', alt: '1st slide' },
+    { src: '/assets/images/backgrounds/t2.jpg', alt: 'Second slide' },
+    { src: '/assets/images/backgrounds/t3.jpg', alt: 'Third slide' },
   ];
 
   return (
     <Slider {...settings} className="container-md heroCarosel">
       {images.map((image, index) => (
         <div key={index}>
-          <img src={image.src} alt={image.alt} style={{width:'100%', height:'800px'}}/>
+          <img src={image.src} alt={image.alt} style={{ width: '100%', height: '700px' }} />
         </div>
       ))}
     </Slider>
-
   );
 }
 
