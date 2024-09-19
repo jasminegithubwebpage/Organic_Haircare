@@ -115,7 +115,7 @@ app.get('/products/:id/ingredients', async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT ingredient FROM product_ingredients WHERE product_id = $1',
+      'SELECT ingredient FROM product_ingredients WHERE id = $1',
       [productId]
     );
     const ingredients = result.rows.map(row => ({ name: row.ingredient }));
@@ -132,7 +132,7 @@ app.get('/products/:id/reviews', async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT * FROM product_reviews WHERE product_id = $1',
+      'SELECT * FROM product_reviews WHERE id = $1',
       [productId]
     );
     res.json(result.rows);
@@ -140,7 +140,38 @@ app.get('/products/:id/reviews', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Submit new review
+app.post("/reviews", async (req, res) => {
+  const { comment, user_name } = req.body;
+  await pool.query(
+    "INSERT INTO product_reviews (id, user_name, comment, likes, dislikes, rating) VALUES (1, $1, $2, 0, 0, 5)",
+    [user_name, comment]
+  );
+  res.send("Review added");
+});
+//fetch review
+app.get("/product/:id/reviews", async (req, res) => {
+  const result = await pool.query("SELECT * FROM product_reviews WHERE id = $1", [
+    req.params.id,
+  ]);
+  res.json(result.rows);
+});
 
+// Like a review
+app.post("/reviews/:reviewId/like", async (req, res) => {
+  await pool.query("UPDATE product_reviews SET likes = likes + 1 WHERE review_id = $1", [
+    req.params.reviewId,
+  ]);
+  res.send("Like updated");
+});
+
+// Dislike a review
+app.post("/reviews/:reviewId/dislike", async (req, res) => {
+  await pool.query("UPDATE product_reviews SET dislikes = dislikes + 1 WHERE review_id = $1", [
+    req.params.reviewId,
+  ]);
+  res.send("Dislike updated");
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

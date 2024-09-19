@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+
 import Features from "../components/Features";
 import Footer from "../components/Footer";
 import HeroCarousel from "../components/HeroCarosel";
@@ -41,7 +41,7 @@ function LandingPage() {
 
   return (
     <div>
-      <Navbar />
+     {/* /// <Navbar /> */}
       <HeroCarousel />
       <Features />
       <div className="p-4">

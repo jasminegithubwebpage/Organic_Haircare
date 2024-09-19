@@ -6,7 +6,7 @@ import Product from "./pages/Product";
 // import PaymentForm from "./components/PaymentForm";
 // import OrderTrack from "./components/OrderTrack";
 import ProductDetail from "./pages/ProductDetail";
-
+import Layout from "./components/Layout";
 function App() {
   return (
     // <>
@@ -17,9 +17,9 @@ function App() {
     // </>
     <Router>
        <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/products" element={<Product/>} />
-      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/" element={<Layout><LandingPage /></Layout>} />
+      <Route path="/products" element={<Layout><Product/></Layout>} />
+      <Route path="/products/:id" element={<Layout><ProductDetail /></Layout>} />
      </Routes>
     </Router>
    
