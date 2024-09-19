@@ -1,14 +1,20 @@
-import React from 'react';
+import React from "react";
 
-function ProductCard({ name, info, price }) {
+function ProductCard({ name, source, info, price }) {
   return (
     <div className="bg-white p-4 shadow-lg rounded-lg">
-      <img src={`path_to_images/${name}.png`} alt={name} className="w-full h-40 object-cover rounded" />
+      <img
+        src={source}
+        alt={name}
+        className="w-full h-60 object-cover rounded"
+      />
       <div className="mt-4">
         <h3 className="text-lg font-bold">{name}</h3>
         <p className="text-sm text-gray-600">{info}</p>
         <p className="text-lg font-bold">{price}</p>
-        <button className="mt-4 bg-brownishgold text-white px-4 py-2 rounded hover:bg-green-600">Add to cart</button>
+        <button className="mt-4 bg-brownishgold text-white px-4 py-2 rounded hover:bg-m500">
+          Add to cart
+        </button>
       </div>
     </div>
   );

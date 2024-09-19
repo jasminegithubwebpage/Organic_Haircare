@@ -1,0 +1,27 @@
+function DashSideBar() {
+  return (
+    <aside className="w-1/5 h-auto bg-m500 text-white flex flex-col">
+    <div className="p-4 text-2xl font-semibold flex items-center">
+      <span className="mr-2">
+        {/* Add a logo if needed */}
+        👜
+      </span>
+      HairCare
+    </div>
+    <nav className="flex-grow mt-4">
+      <ul>
+        <li className="px-4 py-2 text-lg hover:bg-m300">
+          Dashboard
+        </li>
+        <li className="px-4 py-2 text-lg hover:bg-m300">Product</li>
+        <li className="px-4 py-2 text-lg hover:bg-m300">Inventory</li>
+        <li className="px-4 py-2 text-lg hover:bg-m300">Reports</li>
+        <li className="px-4 py-2 text-lg hover:bg-m300">Messages</li>
+        <li className="px-4 py-2 text-lg hover:bg-m300">Customers</li>
+      </ul>
+    </nav>
+  </aside>
+  );
+};
+
+export default DashSideBar;
