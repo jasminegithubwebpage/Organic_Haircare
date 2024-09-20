@@ -29,7 +29,7 @@ app.get("/products", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM products;");
 
-   // console.log(result.rows);
+    // console.log(result.rows);
 
     res.json(result.rows);
   } catch (err) {
@@ -41,50 +41,50 @@ app.get("/products", async (req, res) => {
 });
 
 // Route to get trending products
-app.get('/trending-products', async (req, res) => {
-  const query = 'SELECT * FROM products ORDER BY  added_date desc limit 4' ;
+app.get("/trending-products", async (req, res) => {
+  const query = "SELECT * FROM products ORDER BY  added_date desc limit 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to get best-selling products
-app.get('/best-selling-products', async (req, res) => {
-  const query = 'SELECT * FROM products ORDER BY count  DESC LIMIT 4';
+app.get("/best-selling-products", async (req, res) => {
+  const query = "SELECT * FROM products ORDER BY count  DESC LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to get today’s deals
-app.get('/today-deals', async (req, res) => {
-  const query = 'SELECT * FROM products ORDER BY discount   LIMIT 4';
+app.get("/today-deals", async (req, res) => {
+  const query = "SELECT * FROM products ORDER BY discount   LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to get top-sold products
-app.get('/top-sold-products', async (req, res) => {
-  const query = 'SELECT * FROM products ORDER BY count DESC LIMIT 4';
+app.get("/top-sold-products", async (req, res) => {
+  const query = "SELECT * FROM products ORDER BY count DESC LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -92,15 +92,14 @@ app.get('/top-sold-products', async (req, res) => {
 app.get("/products/:id", async (req, res) => {
   const productId = req.params.id;
   try {
-    const result = await pool.query(
-      "SELECT * FROM products WHERE id = $1",
-      [productId]
-    );
-    
+    const result = await pool.query("SELECT * FROM products WHERE id = $1", [
+      productId,
+    ]);
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
-    
+
     const product = result.rows[0];
     console.log("Product fetched from DB:", product); // Add this for debugging
     res.json(product);
@@ -110,15 +109,19 @@ app.get("/products/:id", async (req, res) => {
   }
 });
 
-
-app.get('/products/:id/ingredients', async (req, res) => {
+app.get("/products/:id/ingredients", async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT ingredient FROM product_ingredients WHERE id = $1',
+      "SELECT ingredient FROM product_ingredients WHERE id = $1",
       [productId]
     );
-    const ingredients = result.rows.map(row => ({ name: row.ingredient }));
+
+    // Flatten the result to return individual ingredient objects
+    const ingredients = result.rows.flatMap((row) =>
+      row.ingredient.map((ingredient) => ({ name: ingredient }))
+    );
+
     console.log(ingredients);
     res.json(ingredients);
   } catch (error) {
@@ -126,13 +129,12 @@ app.get('/products/:id/ingredients', async (req, res) => {
   }
 });
 
-
 //fetch the review
-app.get('/products/:id/reviews', async (req, res) => {
+app.get("/products/:id/reviews", async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT * FROM product_reviews WHERE id = $1',
+      "SELECT * FROM product_reviews WHERE id = $1",
       [productId]
     );
     res.json(result.rows);
@@ -151,25 +153,28 @@ app.post("/reviews", async (req, res) => {
 });
 //fetch review
 app.get("/product/:id/reviews", async (req, res) => {
-  const result = await pool.query("SELECT * FROM product_reviews WHERE id = $1", [
-    req.params.id,
-  ]);
+  const result = await pool.query(
+    "SELECT * FROM product_reviews WHERE id = $1",
+    [req.params.id]
+  );
   res.json(result.rows);
 });
 
 // Like a review
 app.post("/reviews/:reviewId/like", async (req, res) => {
-  await pool.query("UPDATE product_reviews SET likes = likes + 1 WHERE review_id = $1", [
-    req.params.reviewId,
-  ]);
+  await pool.query(
+    "UPDATE product_reviews SET likes = likes + 1 WHERE review_id = $1",
+    [req.params.reviewId]
+  );
   res.send("Like updated");
 });
 
 // Dislike a review
 app.post("/reviews/:reviewId/dislike", async (req, res) => {
-  await pool.query("UPDATE product_reviews SET dislikes = dislikes + 1 WHERE review_id = $1", [
-    req.params.reviewId,
-  ]);
+  await pool.query(
+    "UPDATE product_reviews SET dislikes = dislikes + 1 WHERE review_id = $1",
+    [req.params.reviewId]
+  );
   res.send("Dislike updated");
 });
 // Start the server
