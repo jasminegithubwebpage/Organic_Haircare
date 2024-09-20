@@ -25,7 +25,7 @@ const pool = new Pool({
 
 // Endpoint to get products
 app.get("/products", async (req, res) => {
-  console.log("jas");
+  // console.log("jas");
   try {
     const result = await pool.query("SELECT * FROM products;");
 
@@ -101,7 +101,7 @@ app.get("/products/:id", async (req, res) => {
     }
 
     const product = result.rows[0];
-    console.log("Product fetched from DB:", product); // Add this for debugging
+    // console.log("Product fetched from DB:", product); // Add this for debugging
     res.json(product);
   } catch (error) {
     console.error("Error fetching product:", error); // Log the error for easier debugging
@@ -109,25 +109,44 @@ app.get("/products/:id", async (req, res) => {
   }
 });
 
-app.get("/products/:id/ingredients", async (req, res) => {
+
+// app.get('/products/:id/ingredients', async (req, res) => {
+//   const productId = req.params.id;
+//   try {
+//     const result = await pool.query(
+//       'SELECT ingredient FROM product_ingredients WHERE id = $1',
+//       [productId]
+//     );
+//     const ingredients = result.rows.map(row => ({ name: row.ingredient }));
+//     console.log(ingredients);
+//     res.json(ingredients);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+app.get('/products/:id/ingredients', async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
       "SELECT ingredient FROM product_ingredients WHERE id = $1",
       [productId]
     );
-
+    
     // Flatten the result to return individual ingredient objects
-    const ingredients = result.rows.flatMap((row) =>
-      row.ingredient.map((ingredient) => ({ name: ingredient }))
+    const ingredients = result.rows.flatMap(row => 
+      row.ingredient.map(ingredient => ({ name: ingredient }))
     );
-
+    
     console.log(ingredients);
     res.json(ingredients);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+
+
 
 //fetch the review
 app.get("/products/:id/reviews", async (req, res) => {

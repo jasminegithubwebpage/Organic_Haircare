@@ -6,7 +6,7 @@ import Footer from "./Footer";
 function PaymentForm() {
   return (
     <>
-      <Navbar />
+
       <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-4 items-center">
         {/* Form Section */}
         <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
@@ -107,7 +107,7 @@ function PaymentForm() {
           </div>
         </div>
       </div>
-      <Footer />
+     
     </>
   );
 }

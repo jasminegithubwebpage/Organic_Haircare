@@ -9,7 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import DashCustomer from "./pages/DashCustomer";
 import DashInventory from "./pages/DashInventory";
 import DashProduct from "./pages/DashProduct";
-
+import PaymentForm from "./components/PaymentForm";
 function App() {
   return (
     <Router>
@@ -35,6 +35,14 @@ function App() {
           element={
             <Layout>
               <ProductDetail />
+            </Layout>
+          }
+        />
+          <Route
+          path="/payment"
+          element={
+            <Layout>
+              <PaymentForm/>
             </Layout>
           }
         />
