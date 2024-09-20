@@ -3,7 +3,7 @@ import {BrowserRouter as Router,Route,Routes} from 'react-router-dom';
 import LandingPage from "./pages/LandingPage";
 // import Login from "./pages/Login";
 import Product from "./pages/Product";
-// import PaymentForm from "./components/PaymentForm";
+import PaymentForm from "./components/PaymentForm";
 // import OrderTrack from "./components/OrderTrack";
 import ProductDetail from "./pages/ProductDetail";
 import Layout from "./components/Layout";
@@ -20,6 +20,7 @@ function App() {
       <Route path="/" element={<Layout><LandingPage /></Layout>} />
       <Route path="/products" element={<Layout><Product/></Layout>} />
       <Route path="/products/:id" element={<Layout><ProductDetail /></Layout>} />
+      <Route path="/paymentform" element={<Layout><PaymentForm /></Layout>} />
      </Routes>
     </Router>
    
