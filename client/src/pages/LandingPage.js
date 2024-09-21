@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-
 import Features from "../components/Features";
-import Footer from "../components/Footer";
 import HeroCarousel from "../components/HeroCarosel";
-import Card from "../components/Card";  // Import the Card component
-import axios from 'axios';
+import Card from "../components/Card"; // Import the Card component
+import axios from "axios";
+import Why from "./Why";
+import Mail from "../components/Mail";
 
 function LandingPage() {
   const [products, setProducts] = useState({
@@ -18,11 +18,10 @@ function LandingPage() {
     const fetchProducts = async () => {
       try {
         const [trending, bestSelling, todayDeals, topSold] = await Promise.all([
-          axios.get('http://localhost:3002/trending-products'),
-        axios.get('http://localhost:3002/best-selling-products'),
-        axios.get('http://localhost:3002/today-deals'),
-        axios.get('http://localhost:3002/top-sold-products'),
-          
+          axios.get("http://localhost:3002/trending-products"),
+          axios.get("http://localhost:3002/best-selling-products"),
+          axios.get("http://localhost:3002/today-deals"),
+          axios.get("http://localhost:3002/top-sold-products"),
         ]);
 
         setProducts({
@@ -32,7 +31,7 @@ function LandingPage() {
           topSold: topSold.data,
         });
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error("Error fetching products:", error);
       }
     };
 
@@ -41,44 +40,49 @@ function LandingPage() {
 
   return (
     <div>
-     {/* /// <Navbar /> */}
       <HeroCarousel />
       <Features />
-      <div className="p-4">
-        <h2 className="text-3xl font-bold mb-4">Trending Products</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {products.trending.map((product) => (
-            <Card key={product.id} product={product} />
-          ))}
+      <Why />
+      <div className="grid grid-cols-2 justify-center">
+        <div>
+          <h2 className="text-m500 ps-40 pb-4">Trending Products</h2>
+          <div className="grid grid-cols-2 gap-10 ps-40 pe-40 pb-40">
+            {products.trending.map((product) => (
+              <Card key={product.id} product={product} />
+            ))}
+          </div>
         </div>
 
-        <h2 className="text-3xl font-bold mt-8 mb-4">Best Selling Products</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {products.bestSelling.map((product) => (
-            <Card key={product.id} product={product} />
-          ))}
+        <div>
+          <h2 className="text-m500 pe-40 pb-4">Best Selling Products</h2>
+          <div className="grid grid-cols-2 gap-10 pe-80 pb-40">
+            {products.bestSelling.map((product) => (
+              <Card key={product.id} product={product} />
+            ))}
+          </div>
         </div>
 
-        <h2 className="text-3xl font-bold mt-8 mb-4">Today's Deals</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {products.todayDeals.map((product) => (
-            <Card key={product.id} product={product} />
-          ))}
+        <div>
+          <h2 className="text-m500 ps-40 pb-4">Today's Deals</h2>
+          <div className="grid grid-cols-2 gap-10 ps-40 pe-40 pb-40">
+            {products.todayDeals.map((product) => (
+              <Card key={product.id} product={product} />
+            ))}
+          </div>
         </div>
 
-        <h2 className="text-3xl font-bold mt-8 mb-4">Top Sold Products</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {products.topSold.map((product) => (
-            <Card key={product.id} product={product} />
-          ))}
+        <div>
+          <h2 className="text-m500 pe-40 pb-4">Top Sold Products</h2>
+          <div className="grid grid-cols-2 gap-10 pe-80 pb-40">
+            {products.topSold.map((product) => (
+              <Card key={product.id} product={product} />
+            ))}
+          </div>
         </div>
       </div>
-      <Footer />
+      <Mail />
     </div>
   );
 }
 
 export default LandingPage;
-
-
-

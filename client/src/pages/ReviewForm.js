@@ -15,17 +15,23 @@ const ReviewForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="my-6">
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        placeholder="Add your review"
-        className="w-full border rounded p-2 mb-4"
-      />
-      <button type="submit" className="bg-purple-500 text-white px-4 py-2 rounded">
-        Submit
-      </button>
-    </form>
+    <div className="bg-m100 p-10 w-1/2">
+      <h3>Your Review</h3>
+      <form onSubmit={handleSubmit} className="my-6">
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Add your review"
+          className="w-full h-40 border rounded-2xl p-2 mb-4 "
+        />
+        <button
+          type="submit"
+          className="bg-m500 flex items-center justify-center text-white p-5 w-40 h-16 rounded-2xl lr20"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
   );
 };
 

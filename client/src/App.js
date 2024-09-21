@@ -38,11 +38,11 @@ function App() {
             </Layout>
           }
         />
-          <Route
+        <Route
           path="/payment"
           element={
             <Layout>
-              <PaymentForm/>
+              <PaymentForm />
             </Layout>
           }
         />

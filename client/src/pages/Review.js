@@ -15,12 +15,15 @@ const Reviews = ({ reviews }) => {
   };
 
   return (
-    <div className="my-6">
-      <h2 className="text-2xl font-bold mb-4">Reviews</h2>
+    <div className="w-1/2 bg-y100 p-10 h-full">
+      <h3 className="mb-4">Reviews</h3>
       {reviews.map((review) => (
-        <div key={review.review_id} className="p-4 border rounded-lg mb-4">
-          <h3 className="text-xl font-semibold">{review.user_name}</h3>
-          <p>{review.comment}</p>
+        <div
+          key={review.review_id}
+          className="bg-white p-10 m-5 border rounded-2xl"
+        >
+          <h4>{review.user_name}</h4>
+          <p className="r16">{review.comment}</p>
           <div className="flex items-center">
             <button
               onClick={() => handleLike(review.review_id)}

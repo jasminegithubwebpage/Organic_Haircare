@@ -13,7 +13,7 @@ function DashSideBar() {
       <nav className="flex-grow mt-4">
         <ul>
           <li className="px-4 py-2 text-lg hover:bg-m300">
-            <Link path="/dashboard">Dashboard</Link>
+            <Link to="/dashboard">Dashboard</Link>
           </li>
           <li className="px-4 py-2 text-lg hover:bg-m300">
             <Link to="/dashboard/product">Product</Link>

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Card from "../components/Card";
 // Inside your Product component
 function Product() {
@@ -34,15 +34,15 @@ function Product() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-4xl font-bold text-center mb-8">Our Products</h1>
+    <div className="p-10">
+      <h1 className="text-center mb-8">Our Products</h1>
       <div className="flex justify-center mb-8">
         <input
           type="text"
           value={searchTerm}
           onChange={handleSearchChange}
           placeholder="Search products..."
-          className="px-4 py-2 border rounded-lg w-1/2"
+          className="px-4 py-2 border rounded-2xl w-1/2"
         />
       </div>
       <div className="flex flex-wrap justify-center gap-10">
@@ -60,10 +60,6 @@ function Product() {
       </div>
     </div>
   );
-
 }
 
 export default Product;
- 
-
-  
