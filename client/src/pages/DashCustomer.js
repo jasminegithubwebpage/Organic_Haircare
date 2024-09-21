@@ -5,7 +5,7 @@ import React from "react";
 const DashCustomer = () => {
   return (
     <>
-      <h2 className="text-xl font-semibold mb-4">Customers</h2>
+      <h3 className="mb-4">Customers</h3>
       <table className="w-full text-left border-collapse">
         <thead>
           <tr>

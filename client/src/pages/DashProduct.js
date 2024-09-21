@@ -61,7 +61,7 @@ const DashProduct = () => {
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Product</h2>
+        <h3>Product</h3>
         <div className="flex space-x-4">
           <input
             type="text"

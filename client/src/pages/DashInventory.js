@@ -19,7 +19,7 @@ const DashInventory = () => {
 
   return (
     <>
-      <h2 className="text-xl font-semibold mb-4">Inventory</h2>
+      <h3 className="mb-4">Inventory</h3>
 
       <table className="w-full text-left border-collapse">
         <thead>

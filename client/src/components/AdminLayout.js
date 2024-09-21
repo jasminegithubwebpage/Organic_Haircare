@@ -5,7 +5,7 @@ import DashSideBar from "./DashSideBar";
 
 function AdminLayout({ children }) {
   return (
-    <div className="flex h-auto">
+    <div className="flex">
       <DashSideBar />
       <main className="flex-grow bg-n100 p-6">
         <DashAvatar />

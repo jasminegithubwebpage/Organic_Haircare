@@ -6,7 +6,7 @@ function Navbar() {
     <nav className="bg-m500 py-4 px-5 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <h1 className="text-white hover:text-y500 active:text-y500">
-          <Link to="/">Habitual</Link>
+          <Link to="/">HairCare</Link>
         </h1>
         <div className="space-x-4">
           <ul className="flex flex-row gap-10">
