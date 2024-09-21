@@ -1,13 +1,24 @@
-import React from "react";
-// import DashSideBar from '../components/DashSideBar';
-// Assuming you have a Sidebar component already
-// import DashAvatar from '../components/DashAvatar';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const DashInventory = () => {
+  const [inventory, setInventory] = useState([]);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const response = await axios.get('http://localhost:3002/dashboard/inventory');
+        setInventory(response.data);
+      } catch (error) {
+        console.error('Error fetching inventory data:', error);
+      }
+    };
+
+    fetchInventory();
+  }, []);
+
   return (
     <>
-      {/* Inventory Table */}
-
       <h2 className="text-xl font-semibold mb-4">Inventory</h2>
 
       <table className="w-full text-left border-collapse">
@@ -22,14 +33,14 @@ const DashInventory = () => {
           </tr>
         </thead>
         <tbody>
-          {[...Array(10)].map((_, index) => (
-            <tr key={index}>
-              <td className="border-b px-4 py-2">Product {index + 1}</td>
-              <td className="border-b px-4 py-2">$100</td>
-              <td className="border-b px-4 py-2">In Stock</td>
+          {inventory.map((item) => (
+            <tr key={item.sales_id}> {/* Corrected here */}
+              <td className="border-b px-4 py-2">{item.product_name}</td>
+              <td className="border-b px-4 py-2">${item.price}</td>
+              <td className="border-b px-4 py-2">{item.available_quantity}</td>
               <td className="border-b px-4 py-2">Customer Review</td>
-              <td className="border-b px-4 py-2">Monthly Sale</td>
-              <td className="border-b px-4 py-2">Product Sold</td>
+              <td className="border-b px-4 py-2">{item.quantity_sold}</td>
+              <td className="border-b px-4 py-2">${item.total_sale_value}</td>
             </tr>
           ))}
         </tbody>

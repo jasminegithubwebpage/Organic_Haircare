@@ -200,3 +200,41 @@ app.post("/reviews/:reviewId/dislike", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+
+
+// Endpoint to fetch products
+app.get('/dashboard/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products'); // Adjust table name if necessary
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+});
+
+app.get('/dashboard/inventory', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        p.id AS product_id,
+        ps.sale_id,
+        p.name AS product_name,
+        p.price,
+        p.count AS available_quantity,
+        COALESCE(ps.quantity_sold, 0) AS quantity_sold,
+        COALESCE(ps.total_sale_value, 0) AS total_sale_value
+      FROM 
+        products p
+      LEFT JOIN 
+        product_sales ps ON p.id = ps.product_id;
+    `;
+    
+    const result = await pool.query(query);
+    res.json(result.rows);
+    console.log(result.rows);
+  } catch (error) {
+    console.error('Error fetching inventory data:', error); // Log error details
+    res.status(500).send('Server Error');
+  }
+});
