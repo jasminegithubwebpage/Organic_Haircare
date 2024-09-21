@@ -1,6 +1,5 @@
 import React from 'react';
-import DashSideBar from '../components/DashSideBar';
-import DashAvatar from '../components/DashAvatar';
+
 
 const Dashboard = () => {
   return (
