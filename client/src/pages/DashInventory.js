@@ -16,10 +16,15 @@ const DashInventory = () => {
 
     fetchInventory();
   }, []);
-
+  
   return (
     <>
+       
       <h3 className="mb-4">Inventory</h3>
+      <div class="flex justify-end">
+
+</div>
+
 
       <table className="w-full text-left border-collapse">
         <thead>

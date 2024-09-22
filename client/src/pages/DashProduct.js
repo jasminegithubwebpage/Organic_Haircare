@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import moment from "moment"; // Assuming you use moment.js for date handling
 
+import { useNavigate } from "react-router-dom";
 const DashProduct = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -57,11 +58,17 @@ const DashProduct = () => {
 
     setFilteredProducts(filtered);
   };
-
+  const navigate = useNavigate();
   return (
     <>
       <div className="flex justify-between items-center mb-4">
         <h3>Product</h3>
+        <button class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold p-3 rounded"  onClick={() => navigate('/add-product')}>
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+    Add Product
+  </button>
         <div className="flex space-x-4">
           <input
             type="text"
@@ -92,7 +99,7 @@ const DashProduct = () => {
         <tbody>
           {filteredProducts.length > 0 ? (
             filteredProducts.map(product => (
-              <tr key={product.product_id}>
+              <tr key={product.sale_id}>
                 <td className="border-b px-4 py-2">{product.name}</td>
                 <td className="border-b px-4 py-2">${product.price}</td>
                 <td className="border-b px-4 py-2">{product.count}</td>

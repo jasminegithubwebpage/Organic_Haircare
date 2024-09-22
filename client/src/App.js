@@ -10,6 +10,7 @@ import DashCustomer from "./pages/DashCustomer";
 import DashInventory from "./pages/DashInventory";
 import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
+import AddProduct from "./pages/AddProduct";
 function App() {
   return (
     <Router>
@@ -78,7 +79,9 @@ function App() {
             </AdminLayout>
           }
         />
+         <Route path="/add-product" element={<AdminLayout> <AddProduct /> </AdminLayout>} />
       </Routes>
+     
     </Router>
   );
 }

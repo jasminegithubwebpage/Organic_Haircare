@@ -18,7 +18,7 @@ function DashSideBar() {
 
           <Link to="/dashboard/product">
             <li className="px-4 py-2 text-lg hover:bg-m300">Product</li>
-          </Link>1
+          </Link>
 
           <Link to="/dashboard/inventory">
             <li className="px-4 py-2 text-lg hover:bg-m300">Inventory</li>
