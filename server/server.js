@@ -137,7 +137,7 @@ app.get('/products/:id/ingredients', async (req, res) => {
       row.ingredient.map(ingredient => ({ name: ingredient }))
     );
     
-    console.log(ingredients);
+    //console.log(ingredients);
     res.json(ingredients);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -238,3 +238,54 @@ app.get('/dashboard/inventory', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
+// Route to add a product
+app.post('/AddProducts', async (req, res) => {
+  const { name, info, price, image_url, count, discount, added_date } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+    const values = [name, info, price, image_url, count, discount, added_date];
+    const result = await pool.query(query, values);
+    res.status(201).json({ success: true, product: result.rows[0] });
+  } catch (error) {
+    console.error('Error adding product:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Query to fetch user from the database
+    const query = 'SELECT * FROM admin_users WHERE username = $1 AND password = $2';
+    const values = [username, password];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+
+      // Check the role and redirect based on that
+      if (user.role === 'superadmin') {
+        res.json({ message: 'Login successful! Redirecting to Super Admin Dashboard', role: 'superadmin' });
+      } else if (user.role === 'admin') {
+        res.json({ message: 'Login successful! Redirecting to Admin Dashboard', role: 'admin' });
+      }
+    } else {
+      res.status(401).json({ message: 'Invalid username or password' });
+    }
+  } catch (error) {
+    console.error('Error querying database:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
