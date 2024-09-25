@@ -12,7 +12,9 @@
 // import PaymentForm from "./components/PaymentForm";
 // import AddProduct from "./pages/AddProduct";
 
-import UserLogin from "./pages/UserLogin";
+import PaymentSuccess from "./pages/PaymentSuccess";
+
+// import UserLogin from "./pages/UserLogin";
 
 function App() {
   return (
@@ -84,9 +86,11 @@ function App() {
     //     />
     //      <Route path="/add-product" element={<AdminLayout> <AddProduct /> </AdminLayout>} />
     //   </Routes>
-     
+
     // </Router>
-    <UserLogin/>
+    // <UserLogin/>
+
+    <PaymentSuccess />
   );
 }
 
