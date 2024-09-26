@@ -24,7 +24,7 @@ const LoginPage = () => {
 
         {/* Login Section */}
 
-        <div className="bg-m500 w-1/2 m-10 p-10 flex flex-col align-center justify-center rounded-2xl">
+        <div className="bg-m500 w-1/2 m-10 px-28 flex flex-col align-center justify-center rounded-2xl">
           <h1 className="text-white mb-6 text-center">Login</h1>
           <p className=" text-white mb-6 text-center">
             Welcome Back! Let's Get Started
