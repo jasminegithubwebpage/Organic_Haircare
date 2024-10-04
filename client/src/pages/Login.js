@@ -1,12 +1,34 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 function Login(){
   const [isSuperAdmin, setIsSuperAdmin] = useState(true);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleSwitch = (adminType) => {
     setIsSuperAdmin(adminType === 'superadmin');
   };
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const username = e.target.username.value;
+    const password = e.target.password.value;
+
+    const response = await fetch('http://localhost:3002/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+    if (data.role === 'superadmin') {
+      navigate('/superadmin-dashboard');
+    } else if (data.role === 'admin') {
+      navigate('/dashboard');
+    } else {
+      alert(data.message);
+    }
+  }
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Image Section */}
@@ -45,7 +67,7 @@ function Login(){
           </div>
 
           {/* Login Form */}
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                 Username
@@ -74,9 +96,6 @@ function Login(){
                 <input type="checkbox" className="form-checkbox h-4 w-4 text-burgundy" />
                 <span className="ml-2 text-sm text-gray-700">Remember me</span>
               </label>
-              {/* <a href="#" className="text-sm text-burgundy hover:underline">
-                Forgot Password?
-              </a> */}
               <p>Forgot Password</p>
             </div>
 
@@ -91,9 +110,6 @@ function Login(){
 
             <p className="text-center text-sm text-gray-600 mt-6">
               New Admin?{' '}
-              {/* <a href="#" className="text-burgundy font-medium hover:underline">
-                Sign up here
-              </a> */}
               <p>Sign up here</p>
             </p>
           </form>

@@ -10,6 +10,9 @@ function Navbar() {
         </h1>
         <div className="space-x-4">
           <ul className="flex flex-row gap-10">
+          <li className="text-white hover:text-y500 active:text-y500 lr16">
+              <Link to="/login">Login</Link>
+            </li>
             <li className="text-white hover:text-y500 active:text-y500 lr16">
               <Link to="/products">Our Products</Link>
             </li>
