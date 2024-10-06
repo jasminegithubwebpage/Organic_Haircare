@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+
+
 import LandingPage from "./pages/LandingPage";
 import Product from "./pages/Product";
 import ProductDetail from "./pages/ProductDetail";

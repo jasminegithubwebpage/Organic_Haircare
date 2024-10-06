@@ -22,14 +22,24 @@ function AddProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { id, ...productData } = product;
+    const formData = new FormData();
+    
+    formData.append('name', product.name);
+    formData.append('info', product.info);
+    formData.append('price', product.price);
+    formData.append('image_url', e.target.image_url.files[0]); // Handle image file
+    formData.append('count', product.count);
+    formData.append('discount', product.discount);
+    formData.append('added_date', product.added_date);
+  
     try {
-      // Make the POST request to your backend
-      const response = await axios.post('http://localhost:3002/AddProducts', productData); // Adjust the URL to your backend route
+      const response = await axios.post('http://localhost:3002/AddProducts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       console.log('Product added:', response.data);
       alert('Product added successfully!');
-      
-      // Reset the form after submission
       setProduct({
         name: '',
         info: '',
@@ -44,6 +54,7 @@ function AddProduct() {
       alert('Failed to add product');
     }
   };
+  
 
   return (
     <div className="max-w-lg mx-auto mt-10">

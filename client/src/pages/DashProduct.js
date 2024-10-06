@@ -35,7 +35,23 @@ const DashProduct = () => {
     );
     applyFilterOption(filtered, filterOption); // Apply filter after searching
   };
+  const deleteProduct = async (id) => {
+    console.log('outside try');
+    try {
+      const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+      if (confirmDelete) {console.log(id);
+        console.log('Deleting product with ID:', id);
+        await axios.delete(`http://localhost:3002/DeleteProduct/${id}`);
 
+        //DashProduct(); // Refresh the product list after deletion
+        alert('Product deleted successfully.');
+      }
+      
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('There was an error deleting the product.');
+    }
+  };
   // Handle dropdown selection change (Week or Month)
   const handleFilterChange = (event) => {
     const option = event.target.value;
@@ -119,7 +135,13 @@ const DashProduct = () => {
                 <td className="border-b px-4 py-2">{product.name}</td>
                 <td className="border-b px-4 py-2">${product.price}</td>
                 <td className="border-b px-4 py-2">{product.count}</td>
-              </tr>
+                <td className="border-b px-4 py-2">
+              <button onClick={() => deleteProduct(product.id)}>
+                <i className="fas fa-trash-alt text-red-600 hover:text-red-800"></i>
+               </button>
+            </td>
+
+               </tr>
             ))
           ) : (
             <tr>
