@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from './UserContext'; // Import the useUser hook
 
 function Login() {
-  const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
-  const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
-  const [isUser, setIsUser] = useState(false); // Set false for non-user roles
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
-  const [isSignUpComplete, setIsSignUpComplete] = useState(false); // Track sign-up success
+  const [isSuperAdmin, setIsSuperAdmin] = useState(true);
+  const [isUser, setIsUser] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUpComplete, setIsSignUpComplete] = useState(false);
   const navigate = useNavigate();
 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('')
+  
   const handleSwitch = (role) => {
     setIsSignUpComplete(false); // Reset sign-up success state
     setIsSignUp(false); // Reset sign-up mode when switching roles
@@ -27,21 +29,39 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
-    const requestBody = {
-      username: e.target.username.value,
-      password: e.target.password.value,
-      role: isSuperAdmin ? 'superadmin' : isUser ? 'user' : 'admin', // Include role in the request
-    };
+    const username = e.target.username.value;
+    const password = e.target.password.value;
+    const confirmPassword = isSignUp ? e.target.confirmPassword?.value : null;
+    const email = isSignUp ? e.target.email?.value : null;
 
+    console.log("1");
+    
     const endpoint = isSignUp ? 'signup' : 'login';
 
-    // Send login request to the backend
+    console.log("2"); 
+    
+    const requestBody = {
+      username,
+      password,
+      ...(isSignUp && { email, confirmPassword }), // Only include email and confirmPassword if it's a signup
+    };
+
+    // console.log("3");
+
     const response = await fetch(`http://localhost:3002/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
+    
+    // const response = await fetch(`http://localhost:3002/login`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(requestBody),
+    // });
+    
+
+    console.log("4");
 
     if (response.ok) {
       const data = await response.json();
@@ -49,8 +69,13 @@ function Login() {
         setIsSignUpComplete(true); // Sign-up success
         setIsSignUp(false); // Switch back to login mode after signup
       } else {
-        setCurrentUser(requestBody.username); // Set the current user in UserContext
-        navigate(data.redirectUrl); // Navigate based on role
+        if (data.role === 'superadmin') {
+          navigate('/superadmin-dashboard');
+        } else if (data.role === 'admin') {
+          navigate('/dashboard');
+        } else if (data.role === 'user') {
+          navigate('/products');
+        }
       }
     } else {
       const errorData = await response.json();
@@ -83,7 +108,7 @@ function Login() {
               : "Welcome Back! Let's Get Started"}
           </p>
 
-          {/* Toggle Buttons for Role Selection */}
+          {/* Toggle Buttons */}
           <div className="flex justify-center mb-4">
             <button
               className={`px-4 py-2 mx-2 text-white rounded ${isSuperAdmin ? 'bg-burgundy' : 'bg-gray-500'}`}

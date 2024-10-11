@@ -151,35 +151,53 @@ app.get('/products/:id/ingredients', async (req, res) => {
 
 
 
-//fetch the review
+// //fetch the review
+// app.get("/products/:id/reviews", async (req, res) => {
+//   const productId = req.params.id;
+//   try {
+//     const result = await pool.query(
+//       "SELECT * FROM product_reviews WHERE id = $1",
+//       [productId]
+     
+//     );
+//     console.log(result.rows);
+//     res.json(result.rows);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+// Submit new review
+app.post("/reviews", async (req, res) => {
+  const { comment, user_name, product_id } = req.body; // Ensure product_id is passed
+  console.log(product_id);
+  try {
+    await pool.query(
+      "INSERT INTO product_reviews (user_name, comment, id, likes, dislikes, rating) VALUES ($1, $2, $3, 0, 0, 5)", // Ensure product_id is correctly named
+      [user_name, comment, product_id] // Save product_id in the correct position
+    );
+
+    res.status(201).send("Review added successfully");
+  } catch (error) {
+    console.error("Error inserting review:", error);
+    res.status(500).send("Error adding review");
+  }
+});
+
+
+//fetch review
+// Fetch the reviews for a product
 app.get("/products/:id/reviews", async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      "SELECT * FROM product_reviews WHERE id = $1",
+      "SELECT * FROM product_reviews WHERE id = $1", // id refers to the product_id here
       [productId]
     );
+    //console.log(result.rows);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
-// Submit new review
-app.post("/reviews", async (req, res) => {
-  const { comment, user_name } = req.body;
-  await pool.query(
-    "INSERT INTO product_reviews (id, user_name, comment, likes, dislikes, rating) VALUES (1, $1, $2, 0, 0, 5)",
-    [user_name, comment]
-  );
-  res.send("Review added");
-});
-//fetch review
-app.get("/product/:id/reviews", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM product_reviews WHERE id = $1",
-    [req.params.id]
-  );
-  res.json(result.rows);
 });
 
 // Like a review
@@ -235,7 +253,7 @@ app.get('/dashboard/inventory', async (req, res) => {
     
     const result = await pool.query(query);
     res.json(result.rows);
-    console.log(result.rows);
+    //console.log(result.rows);
   } catch (error) {
     console.error('Error fetching inventory data:', error); // Log error details
     res.status(500).send('Server Error');
@@ -291,19 +309,22 @@ app.post('/login', async (req, res) => {
 
   try {
     // Query to fetch user from the database
-    const query = 'SELECT * FROM admin_users WHERE username = $1 AND password = $2';
+    const query = 'SELECT * FROM users WHERE username = $1 AND password = $2';
     const values = [username, password];
-
     const result = await pool.query(query, values);
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
 
-      // Check the role and redirect based on that
+      // Check the role and send the corresponding redirect URL
       if (user.role === 'superadmin') {
-        res.json({ message: 'Login successful! Redirecting to Super Admin Dashboard', role: 'superadmin' });
+        res.json({ message: 'Login successful', role: 'superadmin', redirectUrl: '/superadmin-dashboard' });
       } else if (user.role === 'admin') {
-        res.json({ message: 'Login successful! Redirecting to Admin Dashboard', role: 'admin' });
+        res.json({ message: 'Login successful', role: 'admin', redirectUrl: '/dashboard' });
+      } else if (user.role === 'user') {
+        res.json({ message: 'Login successful', role: 'user', redirectUrl: '/products' });
+      } else {
+        res.status(401).json({ message: 'Invalid role or unauthorized user' });
       }
     } else {
       res.status(401).json({ message: 'Invalid username or password' });
@@ -335,19 +356,12 @@ app.delete('/DeleteProduct/:id', async (req, res) => {
 });
 
 
-// Secret for JWT
-// const JWT_SECRET = 'your_jwt_secret_key';
-const JWT_SECRET = process.env.JWT_SECRET;
 
-// Helper function to generate JWT
-const generateToken = (user) => {
-  return jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-};
 
-// Sign-Up Route
 app.post('/signup', async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
-  console.log('signin server');
+  console.log('signup server');
+
   // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: 'Passwords do not match' });
@@ -359,52 +373,17 @@ app.post('/signup', async (req, res) => {
     if (userCheck.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
-    console.log(password);
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
-    // Insert new user into the database
     const newUser = await pool.query(
+
+    // Insert new user into the database (without password hashing)
       'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, hashedPassword]
+      [username, email, password] // Store password as plain text
     );
 
-    // Generate a JWT token
-   // const token = generateToken(newUser.rows[0]);
-
-    res.status(201).json({ message: 'User created successfully'});
+    res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
 });
 
-app.post('/login', async (req, res) => {
-  console.log('loginserver');
-  const { username, password } = req.body;
-  console.log(username);
-  console.log(password);
-  // Fetch the user from the database
-  const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
-  if (user.rows.length === 0) {
-    return res.status(400).json({ message: 'Invalid username or password' });
-  }
-    // Log the stored password hash for verification
-    console.log('Stored Hashed Password:', user.rows[0].password);
-  // Compare the plain text password with the stored hash
-  const validPassword = await bcrypt.compare(password, user.rows[0].password);
-
-  if (!validPassword) {
-    return res.status(400).json({ message: 'Invalid username or password' });
-  }
-  
-  // Log the comparison result for debugging
-  console.log('Password Match:', validPassword);
-  res.status(200).json({ message: 'Login successful' });
-});
-
-// // Server setup
-// const PORT = 3002;
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });

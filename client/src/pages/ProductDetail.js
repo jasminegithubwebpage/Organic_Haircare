@@ -3,12 +3,11 @@ import axios from "axios";
 import Ingredients from "./Ingredients";
 import Review from "./Review";
 import ReviewForm from "./ReviewForm";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const ProductDetail = () => {
   const [product, setProduct] = useState({});
   const [ingredients, setIngredients] = useState([]);
-  const [reviews, setReviews] = useState([]);
   const [quantity, setQuantity] = useState(1); // Track quantity in ProductDetail
   const { id } = useParams();
   const navigate = useNavigate(); // useNavigate for routing
@@ -23,17 +22,14 @@ const ProductDetail = () => {
     axios.get(`http://localhost:3002/products/${id}/ingredients`).then((response) => {
       setIngredients(response.data);
     });
-
-    // Fetch reviews
-    axios.get(`http://localhost:3002/products/${id}/reviews`).then((response) => {
-      setReviews(response.data);
-    });
   }, [id]);
 
   const handleBuyNow = () => {
     // Navigate to the payment page and pass product & quantity via state
     navigate("/payment", { state: { product, quantity } });
   };
+
+  console.log(id); // Check if the ID is being logged
 
   return (
     <div className="p-40 pt-20 items-center border border-orange-600">
@@ -79,9 +75,9 @@ const ProductDetail = () => {
 
       <div className="flex flex-row">
         {/* Reviews */}
-        <Review reviews={reviews} />
+        <Review productId={id} /> {/* Send product ID to Review component */}
         {/* Review Form */}
-        <ReviewForm />
+        <ReviewForm product_id={id} /> {/* Pass product_id to ReviewForm */}
       </div>
     </div>
   );
