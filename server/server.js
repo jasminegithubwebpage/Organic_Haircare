@@ -360,30 +360,73 @@ app.delete('/DeleteProduct/:id', async (req, res) => {
 
 app.post('/signup', async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
-  console.log('signup server');
+  console.log('Received:', req.body);
 
-  // Check if passwords match
-  if (password !== confirmPassword) {
+  if (password.trim() !== confirmPassword.trim()) {
     return res.status(400).json({ message: 'Passwords do not match' });
   }
 
   try {
-    // Check if user already exists
     const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userCheck.rows.length > 0) {
       return res.status(400).json({ message: 'User already exists' });
     }
-    const newUser = await pool.query(
 
-    // Insert new user into the database (without password hashing)
+    const newUser = await pool.query(
       'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, password] // Store password as plain text
+      [username, email, password]
     );
 
     res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 });
 
 
+app.get("/user/:id", async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const result = await pool.query(
+      "SELECT username, email, address FROM users WHERE id = $1",
+      [userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+app.post('/orders', async (req, res) => {
+  const { productId, quantity, totalPrice, paymentMethod, trackingID, deliveryDate } = req.body;
+
+  try {
+    // Insert order details into the orders table
+    const result = await pool.query(
+      `INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [productId, quantity, totalPrice, paymentMethod, trackingID, deliveryDate]
+    );
+
+    // Get the inserted order details
+    const newOrder = result.rows[0];
+
+    // Respond with the created order details
+    return res.status(201).json({
+      message: 'Order created successfully',
+      order: newOrder,
+    });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+});
