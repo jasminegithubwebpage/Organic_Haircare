@@ -402,31 +402,34 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-
-app.post('/orders', async (req, res) => {
-  const { productId, quantity, totalPrice, paymentMethod, trackingID, deliveryDate } = req.body;
-
+app.post('/orders', async (req, res) => { 
   try {
-    // Insert order details into the orders table
-    const result = await pool.query(
-      `INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [productId, quantity, totalPrice, paymentMethod, trackingID, deliveryDate]
-    );
+    const { user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
 
-    // Get the inserted order details
-    const newOrder = result.rows[0];
+    // Create a new order in the PostgreSQL database
+    const query = `
+      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, order_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *;
+    `;
 
-    // Respond with the created order details
-    return res.status(201).json({
-      message: 'Order created successfully',
-      order: newOrder,
-    });
+    const values = [
+      user_id,
+      product_id,
+      quantity,
+      total_price,
+      payment_method,
+      tracking_id,
+      delivery_date,
+      new Date() // Store the current date as order date
+    ];
+
+    const result = await pool.query(query, values);
+    
+    // Return the newly created order
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error creating order:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ message: 'Error creating order' });
   }
 });
