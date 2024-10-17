@@ -173,5 +173,12 @@ div > span {
 .about_container>div>P{
   text-align: justify;
   color:#57595A;
+}
 
+.contact{
+  width: 600px;
+}
+
+.con{
+  height:600px;
 }

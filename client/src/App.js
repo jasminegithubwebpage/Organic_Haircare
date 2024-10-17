@@ -15,6 +15,7 @@ import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
 import About from "./pages/About";
+import Contactus from "./pages/Contactus";
 // import UserLogin from "./pages/UserLogin";
 // import Dashboard from "./pages/Dashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
@@ -35,6 +36,13 @@ function App() {
           element={
             <Layout>
               <About />
+            </Layout>
+          }
+        /><Route
+          path="/contact"
+          element={
+            <Layout>
+              <Contactus />
             </Layout>
           }
         />
