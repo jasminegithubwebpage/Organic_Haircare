@@ -144,3 +144,34 @@ div > span {
   font-size: 20px;
   font-weight: 400;
 }
+
+.whole{
+  width: 100%;
+  display: flex;
+}
+
+.about{
+  align-items: center;
+  margin-left: 150px;
+  padding: 30px;
+}
+
+
+.about_container{
+  padding: 40px;
+  width: 75%;
+}
+
+.about_container>div>h4{
+  color:#752D42;
+}
+
+.about_container>div{
+  padding: 10px;
+}
+
+.about_container>div>P{
+  text-align: justify;
+  color:#57595A;
+
+}

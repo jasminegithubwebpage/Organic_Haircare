@@ -14,6 +14,7 @@ import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
+import About from "./pages/About";
 // import UserLogin from "./pages/UserLogin";
 // import Dashboard from "./pages/Dashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
@@ -26,6 +27,14 @@ function App() {
           element={
             <Layout>
               <LandingPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <Layout>
+              <About />
             </Layout>
           }
         />
