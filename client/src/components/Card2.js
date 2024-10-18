@@ -1,13 +1,12 @@
-function Card2(props) {
+// src/components/Card2.js
+import React from "react";
+
+function Card2({ src, alt, detail, title }) {
   return (
-    <div className="bg-white rounded-2xl p-5 card2">
-      <img
-        src={props.src}
-        alt={props.heading}
-        className="rounded-2xl card2Img"
-      />
-      <h3 className="text-m300">{props.heading} hello</h3>
-      <p className="text-n600 text-justify r16">{props.detail}</p>
+    <div className="card">
+      <img src={src} alt={alt} className="card-image" />
+      <h3 className="card-title">{title}</h3> {/* Displaying the title */}
+      <p className="card-detail">{detail}</p>
     </div>
   );
 }

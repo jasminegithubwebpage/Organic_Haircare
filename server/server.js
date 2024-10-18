@@ -402,34 +402,159 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-app.post('/orders', async (req, res) => { 
+app.post('/orders', async (req, res) => {
+  const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
+
   try {
-    const { user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
-
-    // Create a new order in the PostgreSQL database
     const query = `
-      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, order_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *;
-    `;
+      INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *;`;
 
-    const values = [
-      user_id,
-      product_id,
-      quantity,
-      total_price,
-      payment_method,
-      tracking_id,
-      delivery_date,
-      new Date() // Store the current date as order date
-    ];
+    const values = [product_id, quantity, total_price, payment_method, tracking_id, delivery_date];
 
     const result = await pool.query(query, values);
-    
-    // Return the newly created order
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result.rows[0]); // Respond with the newly created order
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error creating order' });
+    console.error('Error saving order:', error);
+    res.status(500).json({ message: 'Error saving order details' });
+  }
+});
+// app.post('/orders', async (req, res) => {
+//   const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
+
+//   try {
+//     // Start a transaction
+//     await pool.query('BEGIN');
+
+//     // Check current count
+//     const countQuery = 'SELECT count FROM products WHERE id = $1';
+//     const countResult = await pool.query(countQuery, [product_id]);
+    
+//     if (countResult.rows.length === 0) {
+//       return res.status(404).json({ message: 'Product not found' });
+//     }
+
+//     const currentCount = countResult.rows[0].count;
+
+//     // Ensure there's enough count
+//     if (currentCount < quantity) {
+//       return res.status(400).json({ message: 'Insufficient stock for this order' });
+//     }
+
+//     // Decrement the count
+//     const newCount = currentCount - quantity;
+//     const updateCountQuery = 'UPDATE products SET count = $1 WHERE id = $2';
+//     await pool.query(updateCountQuery, [newCount, product_id]);
+
+//     // Insert the order
+//     const query = `
+//       INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
+//       VALUES ($1, $2, $3, $4, $5, $6)
+//       RETURNING *;`;
+
+//     const values = [product_id, quantity, total_price, payment_method, tracking_id, delivery_date];
+
+//     const result = await pool.query(query, values);
+
+//     // Commit the transaction
+//     await pool.query('COMMIT');
+
+//     // Check if new count is below threshold
+//     if (newCount < 5) {
+//       // Notify the admin in some way (could be through a message system, etc.)
+//       console.log(`Alert: Count for product ID ${product_id} is below threshold!`);
+//     }
+
+//     res.status(201).json(result.rows[0]); // Respond with the newly created order
+//   } catch (error) {
+//     // Rollback the transaction in case of an error
+//     await pool.query('ROLLBACK');
+//     console.error('Error saving order:', error);
+//     res.status(500).json({ message: 'Error saving order details' });
+//   }
+// });
+// Assuming you have already set up your pool for PostgreSQL
+app.get('/api/low-stock', async (req, res) => {
+  try {
+    const query = 'SELECT id, count AS stock FROM products WHERE count < $1';
+    const values = [5]; // Set your low stock threshold here
+    const result = await pool.query(query, values);
+
+    // Return the list of low stock products
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching low stock products:', error);
+    res.status(500).json({ message: 'Error fetching low stock products' });
+  }
+});
+
+// Get Orders
+app.get('/api/orders', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM orders ORDER BY order_date DESC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching orders');
+  }
+});
+
+// Get Users
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching users');
+  }
+});
+
+// Assuming you're using Express and your database is set up
+app.patch('/api/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const { count, discount } = req.body;
+
+  try {
+    let query;
+    const values = [];
+
+    if (count !== undefined) {
+      query = 'UPDATE products SET count = $1 WHERE id = $2';
+      values.push(count, id);
+    } else if (discount !== undefined) {
+      query = 'UPDATE products SET discount = $1 WHERE id = $2';
+      values.push(discount, id);
+    }
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.status(200).json({ message: 'Product updated successfully' });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ message: 'Error updating product' });
+  }
+});
+// Assuming you have a customers table and orders table
+app.get('/api/customers', async (req, res) => {
+  try {
+    const query = `
+      SELECT c.id, c.name, c.email, COUNT(o.id) AS order_count
+      FROM users c
+      LEFT JOIN orders o ON c.id = o.customer_id
+      GROUP BY c.id
+      ORDER BY c.name;
+    `;
+
+    const result = await pool.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching customer data:', error);
+    res.status(500).json({ message: 'Error fetching customer data' });
   }
 });

@@ -25,9 +25,20 @@ const ProductDetail = () => {
   }, [id]);
 
   const handleBuyNow = () => {
+    if (!product) {
+      console.error("Product not found!");
+      return;
+    }
     // Navigate to the payment page and pass product & quantity via state
-    navigate("/payment", { state: { product, quantity } });
+    navigate("/payment", { state: { product, quantity, id } });
   };
+
+  console.log(id); // Check if the ID is being logged
+
+  // Add the conditional rendering here to wait for the product details
+  if (!product.name) {
+    return <p>Loading product details...</p>;
+  }
 
   console.log(id); // Check if the ID is being logged
 

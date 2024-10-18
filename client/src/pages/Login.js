@@ -24,32 +24,38 @@ function Login() {
       setIsUser(true);
     }
   };
-
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+  
+    // Prepare the request body with common fields
     const requestBody = {
       username: e.target.username.value,
       password: e.target.password.value,
-      role: isSuperAdmin ? 'superadmin' : isUser ? 'user' : 'admin', // Include role in the request
+      role: isSuperAdmin ? 'superadmin' : isUser ? 'user' : 'admin', // Include role
     };
-
+  
+    // Add extra fields for sign-up (email and confirmPassword)
+    if (isSignUp) {
+      requestBody.email = e.target.email?.value; // Use optional chaining to avoid errors
+      requestBody.confirmPassword = e.target['confirmPassword'].value;
+    }
+  
     const endpoint = isSignUp ? 'signup' : 'login';
-
-    // Send login request to the backend
+  
+    // Send the request to the backend
     const response = await fetch(`http://localhost:3002/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
-
+  
     if (response.ok) {
       const data = await response.json();
       if (isSignUp) {
-        setIsSignUpComplete(true); // Sign-up success
-        setIsSignUp(false); // Switch back to login mode after signup
+        setIsSignUpComplete(true); // Indicate sign-up success
+        setIsSignUp(false); // Switch back to login mode
       } else {
-        setCurrentUser(requestBody.username); // Set the current user in UserContext
+        setCurrentUser(requestBody.username); // Set current user
         navigate(data.redirectUrl); // Navigate based on role
       }
     } else {
@@ -57,7 +63,7 @@ function Login() {
       alert(`Error: ${errorData.message}`);
     }
   };
-
+  
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Image Section */}
