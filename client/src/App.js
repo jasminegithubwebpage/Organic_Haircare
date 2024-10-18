@@ -15,7 +15,7 @@ import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
 
-import UpdateProduct from "./pages/UpdateProduct"
+import UpdateProduct from "./pages/UpdateProduct";
 
 import About from "./pages/About";
 import Contactus from "./pages/Contactus";
@@ -44,7 +44,8 @@ function App() {
               <About />
             </Layout>
           }
-        /><Route
+        />
+        <Route
           path="/contact"
           element={
             <Layout>
@@ -60,7 +61,7 @@ function App() {
             </Layout>
           }
         />
-         <Route
+        <Route
           path="/login"
           element={
             <Layout>
@@ -68,8 +69,8 @@ function App() {
             </Layout>
           }
         />
-         <Route path="/admin-dashboard" element={<Dashboard />} />  
-         <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
+        <Route path="/admin-dashboard" element={<Dashboard />} />
+        <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
         <Route
           path="/products/:id"
           element={
@@ -82,15 +83,18 @@ function App() {
           path="/payment"
           element={
             <Layout>
-             
-      <PaymentForm />
-   
-              
-          
+              <PaymentForm />
             </Layout>
           }
         />
-        <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
+        <Route
+          path="/payment-success"
+          element={
+            <Layout>
+              <PaymentSuccess />
+            </Layout>
+          }
+        />
 
         <Route
           path="/dashboard"
@@ -116,7 +120,7 @@ function App() {
             </AdminLayout>
           }
         />
-         <Route
+        <Route
           path="/dashboard/update-product"
           element={
             <AdminLayout>
@@ -140,11 +144,17 @@ function App() {
             </AdminLayout>
           }
         />
-         <Route path="/add-product" element={<AdminLayout> <AddProduct /> </AdminLayout>} />
+        <Route
+          path="/add-product"
+          element={
+            <AdminLayout>
+              {" "}
+              <AddProduct />{" "}
+            </AdminLayout>
+          }
+        />
       </Routes>
-    
     </Router>
-    
   );
 }
 

@@ -6,11 +6,19 @@ const PaymentForm = () => {
   const location = useLocation(); // Retrieve data passed via state
   const { product, quantity: initialQuantity } = location.state || {}; // Destructure product and quantity
   const [quantity, setQuantity] = useState(initialQuantity || 1); // Default to 1 if not provided
-  const productPrice = Number(product?.price) || 0; 
+  const productPrice = Number(product?.price) || 0;
   const totalPrice = quantity * productPrice;
   const [paymentMethod, setPaymentMethod] = useState("UPI"); // Default to UPI
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    upi: "",
+  });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  
+
   const handleIncrement = () => setQuantity(quantity + 1);
   const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
 
@@ -18,18 +26,20 @@ const PaymentForm = () => {
   if (!product) return <p>Loading payment details...</p>;
 
   // Generate a random tracking ID (you can customize the format)
-  const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  
+  const trackingID = `TRACK-${Math.random()
+    .toString(36)
+    .substr(2, 9)
+    .toUpperCase()}`;
+
   // Get today's date and add 7 days for the delivery date
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 7);
-  
+
   // Format the delivery date to a readable string (optional)
-  const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+
   // Prepare order data
   const orderData = {
-   
     product_id: product.id, // Ensure product.id exists
     quantity,
     total_price: totalPrice,
@@ -38,38 +48,115 @@ const PaymentForm = () => {
     delivery_date: formattedDeliveryDate, // Use the generated delivery date
   };
 
+  // Form validation logic
+  const validateForm = () => {
+    const newErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!formData.name) newErrors.name = "Name is required";
+    if (!formData.phone || !phoneRegex.test(formData.phone))
+      newErrors.phone = "Valid phone number is required";
+    if (!formData.email || !emailRegex.test(formData.email))
+      newErrors.email = "Valid email is required";
+    if (!formData.address) newErrors.address = "Address is required";
+    if (paymentMethod === "UPI" && !formData.upi)
+      newErrors.upi = "UPI ID is required";
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Handle proceed to save order data
   const handleProceed = async () => {
-    try {
-      const response = await axios.post('http://localhost:3002/orders', orderData);
-      console.log('Order saved successfully:', response.data);
-      
-      // Navigate to the payment success page with order details
-      navigate('/payment-success', { state: { orderData } });
-    } catch (error) {
-      console.error('Error saving order details:', error);
+    if (validateForm()) {
+      try {
+        const response = await axios.post(
+          "http://localhost:3002/orders",
+          orderData
+        );
+        console.log("Order saved successfully:", response.data);
+
+        // Navigate to the payment success page with order details
+        navigate("/payment-success", { state: { orderData } });
+      } catch (error) {
+        console.error("Error saving order details:", error);
+      }
     }
   };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
       {/* Payment Form Section */}
       <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
         <h2 className="text-2xl font-bold mb-6">Payment</h2>
-        <form onSubmit={(e) => { e.preventDefault(); handleProceed(); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleProceed();
+          }}
+        >
           <div className="grid grid-cols-2 gap-6">
-            <input type="text" placeholder="Name" className="border p-2 rounded" />
-            <input type="text" placeholder="Phone" className="border p-2 rounded" />
-            <input type="email" placeholder="Email" className="border p-2 rounded" />
-            <input type="text" placeholder="Address" className="border p-2 rounded col-span-2" />
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Name"
+              className="border p-2 rounded"
+            />
+            {errors.name && <p className="text-red-500">{errors.name}</p>}
+            <input
+              type="text"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Phone"
+              className="border p-2 rounded"
+            />
+            {errors.phone && <p className="text-red-500">{errors.phone}</p>}
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="border p-2 rounded"
+            />
+            {errors.email && <p className="text-red-500">{errors.email}</p>}
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="Address"
+              className="border p-2 rounded col-span-2"
+            />
+            {errors.address && <p className="text-red-500">{errors.address}</p>}
           </div>
           <div className="mt-4">
             {paymentMethod === "UPI" && (
-              <input type="text" placeholder="UPI" className="border p-2 rounded w-full" />
+              <>
+                <input
+                  type="text"
+                  name="upi"
+                  value={formData.upi}
+                  onChange={handleChange}
+                  placeholder="UPI"
+                  className="border p-2 rounded w-full"
+                />
+                {errors.upi && <p className="text-red-500">{errors.upi}</p>}
+              </>
             )}
-           {/* <div className="mt-2 text-center">Or</div> */}
           </div>
           <button
-            type="submit" className="mt-4 w-full bg-m500 text-white p-2 rounded"
+            type="submit"
+            className="mt-4 w-full bg-m500 text-white p-2 rounded"
           >
             Proceed
           </button>
@@ -99,9 +186,13 @@ const PaymentForm = () => {
           <div className="flex justify-between p-2 items-center">
             <p>Quantity:</p>
             <div className="flex items-center">
-              <button onClick={handleDecrement} className="px-2">-</button>
+              <button onClick={handleDecrement} className="px-2">
+                -
+              </button>
               <p className="mx-2">{quantity}</p>
-              <button onClick={handleIncrement} className="px-2">+</button>
+              <button onClick={handleIncrement} className="px-2">
+                +
+              </button>
             </div>
           </div>
 
@@ -132,15 +223,30 @@ const PaymentForm = () => {
 
         <div className="mt-4">
           <label className="flex items-center">
-            <input type="radio" name="payment" value="Pay On Delivery" onChange={(e) => setPaymentMethod(e.target.value)} className="mr-2" /> Pay On Delivery
+            <input
+              type="radio"
+              name="payment"
+              value="Pay On Delivery"
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mr-2"
+            />{" "}
+            Pay On Delivery
           </label>
           <label className="flex items-center">
-            <input type="radio" name="payment" value="UPI" checked={paymentMethod === "UPI"} onChange={(e) => setPaymentMethod(e.target.value)} className="mr-2" /> UPI
+            <input
+              type="radio"
+              name="payment"
+              value="UPI"
+              checked={paymentMethod === "UPI"}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mr-2"
+            />{" "}
+            UPI
           </label>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default PaymentForm;

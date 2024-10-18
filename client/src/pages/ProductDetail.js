@@ -19,34 +19,55 @@ const ProductDetail = () => {
     });
 
     // Fetch ingredients
-    axios.get(`http://localhost:3002/products/${id}/ingredients`).then((response) => {
-      setIngredients(response.data);
-    });
+    axios
+      .get(`http://localhost:3002/products/${id}/ingredients`)
+      .then((response) => {
+        setIngredients(response.data);
+      });
   }, [id]);
 
-  const handleBuyNow = () => {
+  const checkUserLoggedIn = async () => {
+    try {
+      const response = await axios.get("http://localhost:3002/auth/check");
+      return response.data.isLoggedIn; // Assuming the response contains a field `isLoggedIn`
+    } catch (error) {
+      console.error("Error checking user login status:", error);
+      return false;
+    }
+  };
+
+  const handleBuyNow = async () => {
+    const isLoggedIn = await checkUserLoggedIn();
+
+    if (!isLoggedIn) {
+      alert("Please log in to make a payment.");
+      navigate("/login"); // Redirect to login page
+      return;
+    }
+
     if (!product) {
       console.error("Product not found!");
       return;
     }
+
     // Navigate to the payment page and pass product & quantity via state
     navigate("/payment", { state: { product, quantity, id } });
   };
-
-  console.log(id); // Check if the ID is being logged
 
   // Add the conditional rendering here to wait for the product details
   if (!product.name) {
     return <p>Loading product details...</p>;
   }
 
-  console.log(id); // Check if the ID is being logged
-
   return (
     <div className="p-40 pt-20 items-center border border-orange-600">
       <div className="grid grid-cols-2 gap-8">
         {/* Left: Product Image */}
-        <img src={product.image_url} alt={product.name} className="rounded-2xl w-full h-full" />
+        <img
+          src={product.image_url}
+          alt={product.name}
+          className="rounded-2xl w-full h-full"
+        />
 
         {/* Right: Product Details */}
         <div>
@@ -58,7 +79,10 @@ const ProductDetail = () => {
 
           {/* Quantity Selector */}
           <div className="flex items-center gap-4 mt-4">
-            <button onClick={() => setQuantity(quantity - 1)} disabled={quantity <= 1}>
+            <button
+              onClick={() => setQuantity(quantity - 1)}
+              disabled={quantity <= 1}
+            >
               -
             </button>
             <span>{quantity}</span>
@@ -66,10 +90,6 @@ const ProductDetail = () => {
           </div>
 
           <div className="flex flex-row gap-6 p-5">
-            <button className="bg-m500 flex items-center justify-center text-white p-5 w-40 h-16 rounded-2xl lr20">
-              Add to Cart
-            </button>
-
             {/* Navigate to Payment page */}
             <button
               onClick={handleBuyNow}
