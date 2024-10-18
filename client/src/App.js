@@ -14,7 +14,12 @@ import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
+<<<<<<< HEAD
 import UpdateProduct from "./pages/UpdateProduct"
+=======
+import About from "./pages/About";
+import Contactus from "./pages/Contactus";
+>>>>>>> c40afa0880559a348e44d2e2e7f773220f5eeb25
 // import UserLogin from "./pages/UserLogin";
 // import Dashboard from "./pages/Dashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -29,6 +34,21 @@ function App() {
           element={
             <Layout>
               <LandingPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <Layout>
+              <About />
+            </Layout>
+          }
+        /><Route
+          path="/contact"
+          element={
+            <Layout>
+              <Contactus />
             </Layout>
           }
         />

@@ -145,6 +145,7 @@ div > span {
   font-weight: 400;
 }
 
+<<<<<<< HEAD
 .card {
   border: 1px solid #ddd; /* Example border */
   border-radius: 8px; /* Rounded corners */
@@ -168,3 +169,42 @@ div > span {
 .card:hover {
   transform: scale(1.05); /* Slightly enlarge on hover */
 }
+=======
+.whole{
+  width: 100%;
+  display: flex;
+}
+
+.about{
+  align-items: center;
+  margin-left: 150px;
+  padding: 30px;
+}
+
+
+.about_container{
+  padding: 40px;
+  width: 75%;
+}
+
+.about_container>div>h4{
+  color:#752D42;
+}
+
+.about_container>div{
+  padding: 10px;
+}
+
+.about_container>div>P{
+  text-align: justify;
+  color:#57595A;
+}
+
+.contact{
+  width: 600px;
+}
+
+.con{
+  height:600px;
+}
+>>>>>>> c40afa0880559a348e44d2e2e7f773220f5eeb25

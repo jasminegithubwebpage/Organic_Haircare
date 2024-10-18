@@ -545,7 +545,7 @@ app.get('/api/customers', async (req, res) => {
   try {
     const query = `
       SELECT c.id, c.name, c.email, COUNT(o.id) AS order_count
-      FROM users c
+      FROM users  c 
       LEFT JOIN orders o ON c.id = o.customer_id
       GROUP BY c.id
       ORDER BY c.name;
