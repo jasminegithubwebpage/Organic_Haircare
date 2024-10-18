@@ -1,3 +1,6 @@
+// src/components/Card2.js
+import React from "react";
+
 function Card2(props) {
   return (
     <div className="bg-white rounded-2xl p-5 card2">

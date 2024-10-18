@@ -1,24 +1,30 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-
-
+import Customers from "./pages/Customers";
+import AdminMsg from "./pages/AdminMsg";
 import LandingPage from "./pages/LandingPage";
 import Product from "./pages/Product";
 import ProductDetail from "./pages/ProductDetail";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
-import DashCustomer from "./pages/DashCustomer";
+
 import DashInventory from "./pages/DashInventory";
 import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
+<<<<<<< HEAD
+import UpdateProduct from "./pages/UpdateProduct"
+=======
 import About from "./pages/About";
 import Contactus from "./pages/Contactus";
+>>>>>>> c40afa0880559a348e44d2e2e7f773220f5eeb25
 // import UserLogin from "./pages/UserLogin";
 // import Dashboard from "./pages/Dashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
+
 function App() {
   return (
     <Router>
@@ -76,10 +82,16 @@ function App() {
           path="/payment"
           element={
             <Layout>
-              <PaymentForm />
+             
+      <PaymentForm />
+   
+              
+          
             </Layout>
           }
         />
+        <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
+
         <Route
           path="/dashboard"
           element={
@@ -89,10 +101,10 @@ function App() {
           }
         />
         <Route
-          path="/dashboard/customers"
+          path="/dashboard/customer"
           element={
             <AdminLayout>
-              <DashCustomer />
+              <Customers />
             </AdminLayout>
           }
         />
@@ -104,11 +116,27 @@ function App() {
             </AdminLayout>
           }
         />
+         <Route
+          path="/dashboard/update-product"
+          element={
+            <AdminLayout>
+              <UpdateProduct />
+            </AdminLayout>
+          }
+        />
         <Route
           path="/dashboard/product"
           element={
             <AdminLayout>
               <DashProduct />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/dashboard/messages"
+          element={
+            <AdminLayout>
+              <AdminMsg />
             </AdminLayout>
           }
         />

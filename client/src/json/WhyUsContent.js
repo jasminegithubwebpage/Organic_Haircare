@@ -1,4 +1,4 @@
-const WhyUsContent=[
+const WhyUsContent = [
     {
         src:"/assets/images/backgrounds/b (3).jpg",
         heading:"100% Natural Ingredients",
@@ -30,5 +30,4 @@ const WhyUsContent=[
         detail:"We value our customers and strive to exceed expectations with each order. From excellent customer service to fast shipping, we make sure your experience with us is smooth and satisfying.  "
     },
 ]
-
-export default WhyUsContent;
+ export default WhyUsContent;
