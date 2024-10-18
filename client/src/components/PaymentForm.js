@@ -1,48 +1,75 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios
+import axios from "axios";
 
 const PaymentForm = () => {
-  const location = useLocation(); // Retrieve data passed via state
-  const { product, quantity: initialQuantity } = location.state || {}; // Destructure product and quantity
-  const [quantity, setQuantity] = useState(initialQuantity || 1); // Default to 1 if not provided
+  const location = useLocation();
+  const { product, quantity: initialQuantity } = location.state || {};
+  const [quantity, setQuantity] = useState(initialQuantity || 1);
   const productPrice = Number(product?.price) || 0;
   const totalPrice = quantity * productPrice;
-  const [paymentMethod, setPaymentMethod] = useState("UPI"); // Default to UPI
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
   const navigate = useNavigate();
+
+  // Form fields state
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [upi, setUpi] = useState("");
+
+  // Validation state
+  const [errors, setErrors] = useState({});
+
+  // Validation function
+  const validate = () => {
+    let validationErrors = {};
+
+    if (!name) validationErrors.name = "Name is required.";
+    if (!phone) validationErrors.phone = "Phone is required.";
+    else if (!/^\d{10}$/.test(phone))
+      validationErrors.phone = "Phone number must be 10 digits.";
+
+    if (!email) validationErrors.email = "Email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(email))
+      validationErrors.email = "Please enter a valid email address.";
+
+    if (!address) validationErrors.address = "Address is required.";
+
+    if (paymentMethod === "UPI" && !upi)
+      validationErrors.upi = "UPI ID is required for UPI payments.";
+
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
+  };
 
   const handleIncrement = () => setQuantity(quantity + 1);
   const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
 
-  // Render a loading message if no product is passed via state
   if (!product) return <p>Loading payment details...</p>;
 
-  // Generate a random tracking ID (you can customize the format)
   const trackingID = `TRACK-${Math.random()
     .toString(36)
     .substr(2, 9)
     .toUpperCase()}`;
 
-  // Get today's date and add 7 days for the delivery date
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 7);
+  const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0];
 
-  // Format the delivery date to a readable string (optional)
-  const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0]; // YYYY-MM-DD format
-
-  // Prepare order data
   const orderData = {
-    product_id: product.id, // Ensure product.id exists
+    product_id: product.id,
     quantity,
     product_name: product.name,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
-    delivery_date: formattedDeliveryDate, // Use the generated delivery date
+    delivery_date: formattedDeliveryDate,
   };
 
-  // Handle proceed to save order data
   const handleProceed = async () => {
+    if (!validate()) return; // Don't proceed if validation fails
+
     try {
       const response = await axios.post(
         "http://localhost:3002/orders",
@@ -50,15 +77,14 @@ const PaymentForm = () => {
       );
       console.log("Order saved successfully:", response.data);
 
-      // Navigate to the payment success page with order details
       navigate("/payment-success", { state: { orderData } });
     } catch (error) {
       console.error("Error saving order details:", error);
     }
   };
+
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
-      {/* Payment Form Section */}
       <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
         <h2 className="text-2xl font-bold mb-6">Payment</h2>
         <form
@@ -68,37 +94,68 @@ const PaymentForm = () => {
           }}
         >
           <div className="grid grid-cols-2 gap-6">
-            <input
-              type="text"
-              placeholder="Name"
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              placeholder="Phone"
-              className="border p-2 rounded"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              className="border p-2 rounded"
-            />
-            <input
-              type="text"
-              placeholder="Address"
-              className="border p-2 rounded col-span-2"
-            />
-          </div>
-          <div className="mt-4">
-            {paymentMethod === "UPI" && (
+            <div>
               <input
                 type="text"
-                placeholder="UPI"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="border p-2 rounded w-full"
               />
-            )}
-            {/* <div className="mt-2 text-center">Or</div> */}
+              {errors.name && <p className="text-red-500">{errors.name}</p>}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.phone && <p className="text-red-500">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.email && <p className="text-red-500">{errors.email}</p>}
+            </div>
+
+            <div className="col-span-2">
+              <input
+                type="text"
+                placeholder="Address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.address && (
+                <p className="text-red-500">{errors.address}</p>
+              )}
+            </div>
           </div>
+
+          <div className="mt-4">
+            {paymentMethod === "UPI" && (
+              <div>
+                <input
+                  type="text"
+                  placeholder="UPI ID"
+                  value={upi}
+                  onChange={(e) => setUpi(e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+                {errors.upi && <p className="text-red-500">{errors.upi}</p>}
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
             className="mt-4 w-full bg-m500 text-white p-2 rounded"
@@ -127,7 +184,6 @@ const PaymentForm = () => {
             <p>${productPrice.toFixed(2)}</p>
           </div>
 
-          {/* Quantity Control */}
           <div className="flex justify-between p-2 items-center">
             <p>Quantity:</p>
             <div className="flex items-center">
@@ -174,7 +230,7 @@ const PaymentForm = () => {
               value="Pay On Delivery"
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mr-2"
-            />{" "}
+            />
             Pay On Delivery
           </label>
           <label className="flex items-center">
@@ -185,7 +241,7 @@ const PaymentForm = () => {
               checked={paymentMethod === "UPI"}
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mr-2"
-            />{" "}
+            />
             UPI
           </label>
         </div>

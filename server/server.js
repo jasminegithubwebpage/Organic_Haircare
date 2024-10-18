@@ -253,32 +253,80 @@ app.get("/dashboard/inventory", async (req, res) => {
   }
 });
 
+// const storage = multer.diskStorage({
+//   destination: "./public/assets/", // Save to the public/assets directory
+//   filename: (req, file, cb) => {
+//     cb(
+//       null,
+//       file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+//     ); // Add timestamp to the filename
+//   },
+// });
+
+// Initialize upload variable
+// const upload = multer({
+//   storage: storage,
+//   limits: { fileSize: 1000000 }, // Limit file size to 1MB
+// }).single("image_url");
+
+// app.post("/AddProducts", (req, res) => {
+//   upload(req, res, async (err) => {
+//     if (err) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "File upload error" });
+//     }
+
+//     const { name, info, price, count, discount, added_date } = req.body;
+//     const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative path
+
+//     if (!name) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Product name is required" });
+//     }
+
+//     try {
+//       const query = `
+//         INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+//         VALUES ($1, $2, $3, $4, $5, $6, $7)
+//         RETURNING *;
+//       `;
+//       const values = [name, info, price, imageUrl, count, discount, added_date];
+//       const result = await pool.query(query, values);
+//       res.status(201).json({ success: true, product: result.rows[0] });
+//     } catch (error) {
+//       console.error("Error adding product:", error);
+//       res.status(500).json({ success: false, message: "Server error" });
+//     }
+//   });
+// });
+
+// Set up storage for uploaded files
 const storage = multer.diskStorage({
-  destination: "./public/assets/", // Save to the public/assets directory
+  destination: (req, file, cb) => {
+    cb(null, "public/assets"); // Store uploaded files in "public/assets"
+  },
   filename: (req, file, cb) => {
-    cb(
-      null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
-    ); // Add timestamp to the filename
+    cb(null, Date.now() + path.extname(file.originalname)); // Name files with timestamp to avoid conflicts
   },
 });
 
-// Initialize upload variable
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 1000000 }, // Limit file size to 1MB
-}).single("image_url");
+// Initialize multer with the storage engine
+const upload = multer({ storage }).single("image_url");
 
+// Handle POST request to add a new product
 app.post("/AddProducts", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      return res
-        .status(400)
-        .json({ success: false, message: "File upload error" });
+      return res.status(400).json({
+        success: false,
+        message: "File upload error",
+      });
     }
 
     const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative path
+    const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative image path
 
     if (!name) {
       return res
@@ -294,7 +342,11 @@ app.post("/AddProducts", (req, res) => {
       `;
       const values = [name, info, price, imageUrl, count, discount, added_date];
       const result = await pool.query(query, values);
-      res.status(201).json({ success: true, product: result.rows[0] });
+
+      res.status(201).json({
+        success: true,
+        product: result.rows[0], // Return the inserted product
+      });
     } catch (error) {
       console.error("Error adding product:", error);
       res.status(500).json({ success: false, message: "Server error" });
@@ -419,38 +471,38 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-app.post("/orders", async (req, res) => {
-  const {
-    product_id,
-    quantity,
-    total_price,
-    payment_method,
-    tracking_id,
-    delivery_date,
-  } = req.body;
+// app.post("/orders", async (req, res) => {
+//   const {
+//     product_id,
+//     quantity,
+//     total_price,
+//     payment_method,
+//     tracking_id,
+//     delivery_date,
+//   } = req.body;
 
-  try {
-    const query = `
-      INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;`;
+//   try {
+//     const query = `
+//       INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
+//       VALUES ($1, $2, $3, $4, $5, $6)
+//       RETURNING *;`;
 
-    const values = [
-      product_id,
-      quantity,
-      total_price,
-      payment_method,
-      tracking_id,
-      delivery_date,
-    ];
+//     const values = [
+//       product_id,
+//       quantity,
+//       total_price,
+//       payment_method,
+//       tracking_id,
+//       delivery_date,
+//     ];
 
-    const result = await pool.query(query, values);
-    res.status(201).json(result.rows[0]); // Respond with the newly created order
-  } catch (error) {
-    console.error("Error saving order:", error);
-    res.status(500).json({ message: "Error saving order details" });
-  }
-});
+//     const result = await pool.query(query, values);
+//     res.status(201).json(result.rows[0]); // Respond with the newly created order
+//   } catch (error) {
+//     console.error("Error saving order:", error);
+//     res.status(500).json({ message: "Error saving order details" });
+//   }
+// });
 app.post("/reset-password", async (req, res) => {
   const { username, newPassword } = req.body;
 
@@ -473,60 +525,78 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-// app.post('/orders', async (req, res) => {
-//   const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
+app.post("/orders", async (req, res) => {
+  const {
+    product_id,
+    quantity,
+    total_price,
+    payment_method,
+    tracking_id,
+    delivery_date,
+  } = req.body;
 
-//   try {
-//     // Start a transaction
-//     await pool.query('BEGIN');
+  try {
+    // Start a transaction
+    await pool.query("BEGIN");
 
-//     // Check current count
-//     const countQuery = 'SELECT count FROM products WHERE id = $1';
-//     const countResult = await pool.query(countQuery, [product_id]);
+    // Check current count
+    const countQuery = "SELECT count FROM products WHERE id = $1";
+    const countResult = await pool.query(countQuery, [product_id]);
 
-//     if (countResult.rows.length === 0) {
-//       return res.status(404).json({ message: 'Product not found' });
-//     }
+    if (countResult.rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
-//     const currentCount = countResult.rows[0].count;
+    const currentCount = countResult.rows[0].count;
 
-//     // Ensure there's enough count
-//     if (currentCount < quantity) {
-//       return res.status(400).json({ message: 'Insufficient stock for this order' });
-//     }
+    // Ensure there's enough count
+    if (currentCount < quantity) {
+      return res
+        .status(400)
+        .json({ message: "Insufficient stock for this order" });
+    }
 
-//     // Decrement the count
-//     const newCount = currentCount - quantity;
-//     const updateCountQuery = 'UPDATE products SET count = $1 WHERE id = $2';
-//     await pool.query(updateCountQuery, [newCount, product_id]);
+    // Decrement the count
+    const newCount = currentCount - quantity;
+    const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
+    await pool.query(updateCountQuery, [newCount, product_id]);
 
-//     // Insert the order
-//     const query = `
-//       INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
-//       VALUES ($1, $2, $3, $4, $5, $6)
-//       RETURNING *;`;
+    // Insert the order
+    const query = `
+      INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *;`;
 
-//     const values = [product_id, quantity, total_price, payment_method, tracking_id, delivery_date];
+    const values = [
+      product_id,
+      quantity,
+      total_price,
+      payment_method,
+      tracking_id,
+      delivery_date,
+    ];
 
-//     const result = await pool.query(query, values);
+    const result = await pool.query(query, values);
 
-//     // Commit the transaction
-//     await pool.query('COMMIT');
+    // Commit the transaction
+    await pool.query("COMMIT");
 
-//     // Check if new count is below threshold
-//     if (newCount < 5) {
-//       // Notify the admin in some way (could be through a message system, etc.)
-//       console.log(`Alert: Count for product ID ${product_id} is below threshold!`);
-//     }
+    // Check if new count is below threshold
+    if (newCount < 5) {
+      // Notify the admin in some way (could be through a message system, etc.)
+      console.log(
+        `Alert: Count for product ID ${product_id} is below threshold!`
+      );
+    }
 
-//     res.status(201).json(result.rows[0]); // Respond with the newly created order
-//   } catch (error) {
-//     // Rollback the transaction in case of an error
-//     await pool.query('ROLLBACK');
-//     console.error('Error saving order:', error);
-//     res.status(500).json({ message: 'Error saving order details' });
-//   }
-// });
+    res.status(201).json(result.rows[0]); // Respond with the newly created order
+  } catch (error) {
+    // Rollback the transaction in case of an error
+    await pool.query("ROLLBACK");
+    console.error("Error saving order:", error);
+    res.status(500).json({ message: "Error saving order details" });
+  }
+});
 // Assuming you have already set up your pool for PostgreSQL
 app.get("/api/low-stock", async (req, res) => {
   try {
@@ -566,35 +636,54 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// Assuming you're using Express and your database is set up
 app.patch("/api/products/:id", async (req, res) => {
   const { id } = req.params;
   const { count, discount } = req.body;
 
   try {
-    let query;
+    // Initialize parts of the query and an array for values
+    let query = "UPDATE products SET ";
+    const updates = [];
     const values = [];
 
     if (count !== undefined) {
-      query = "UPDATE products SET count = $1 WHERE id = $2";
-      values.push(count, id);
-    } else if (discount !== undefined) {
-      query = "UPDATE products SET discount = $1 WHERE id = $2";
-      values.push(discount, id);
+      updates.push(`count = $${updates.length + 1}`);
+      values.push(count);
     }
 
+    if (discount !== undefined) {
+      updates.push(`discount = $${updates.length + 1}`);
+      values.push(discount);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No fields provided to update" });
+    }
+
+    // Finalize the query
+    query +=
+      updates.join(", ") + ` WHERE id = $${updates.length + 1} RETURNING count`;
+    values.push(id);
+
+    // Execute the query
     const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json({ message: "Product updated successfully" });
+    // Send back the updated count in the response
+    const updatedCount = result.rows[0].count;
+    res.status(200).json({
+      message: "Product updated successfully",
+      updatedCount,
+    });
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ message: "Error updating product" });
   }
 });
+
 // Assuming you have a customers table and orders table
 // Assuming you have a customers table and orders table
 app.get("/api/customers", async (req, res) => {
