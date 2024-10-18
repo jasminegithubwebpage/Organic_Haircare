@@ -26,24 +26,24 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-  const checkUserLoggedIn = async () => {
-    try {
-      const response = await axios.get("http://localhost:3002/auth/check");
-      return response.data.isLoggedIn; // Assuming the response contains a field `isLoggedIn`
-    } catch (error) {
-      console.error("Error checking user login status:", error);
-      return false;
-    }
-  };
+  // const checkUserLoggedIn = async () => {
+  //   try {
+  //     const response = await axios.get("http://localhost:3002/auth/check");
+  //     return response.data.isLoggedIn; // Assuming the response contains a field `isLoggedIn`
+  //   } catch (error) {
+  //     console.error("Error checking user login status:", error);
+  //     return false;
+  //   }
+  // };
 
   const handleBuyNow = async () => {
-    const isLoggedIn = await checkUserLoggedIn();
+    // const isLoggedIn = await checkUserLoggedIn();
 
-    if (!isLoggedIn) {
-      alert("Please log in to make a payment.");
-      navigate("/login"); // Redirect to login page
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   alert("Please log in to make a payment.");
+    //   navigate("/login"); // Redirect to login page
+    //   return;
+    // }
 
     if (!product) {
       console.error("Product not found!");

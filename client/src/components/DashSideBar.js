@@ -3,12 +3,19 @@ import { Link } from "react-router-dom";
 function DashSideBar() {
   return (
     <aside className="w-80 h-auto min-h-screen bg-m500 text-white flex flex-col">
-      <div className="p-4 text-2xl flex items-center">
-        <span className="mr-2">
-          {/* Add a logo if needed */}
-          👜
-        </span>
-        HairCare
+      <div className="p-4 text-2xl items-center">
+        <div className="flex">
+          <span className="mr-2">
+            {/* Add a logo if needed */}
+            👜
+          </span>
+          <h1>HairCare</h1>
+        </div>
+        <div>
+          <Link to="/login">
+            <p className="r12">Logout</p>
+          </Link>
+        </div>
       </div>
       <nav className="flex-grow mt-4">
         <ul>

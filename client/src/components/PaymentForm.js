@@ -9,14 +9,6 @@ const PaymentForm = () => {
   const productPrice = Number(product?.price) || 0;
   const totalPrice = quantity * productPrice;
   const [paymentMethod, setPaymentMethod] = useState("UPI"); // Default to UPI
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    upi: "",
-  });
-  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleIncrement = () => setQuantity(quantity + 1);
@@ -42,54 +34,28 @@ const PaymentForm = () => {
   const orderData = {
     product_id: product.id, // Ensure product.id exists
     quantity,
+    product_name: product.name,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
     delivery_date: formattedDeliveryDate, // Use the generated delivery date
   };
 
-  // Form validation logic
-  const validateForm = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10}$/;
-
-    if (!formData.name) newErrors.name = "Name is required";
-    if (!formData.phone || !phoneRegex.test(formData.phone))
-      newErrors.phone = "Valid phone number is required";
-    if (!formData.email || !emailRegex.test(formData.email))
-      newErrors.email = "Valid email is required";
-    if (!formData.address) newErrors.address = "Address is required";
-    if (paymentMethod === "UPI" && !formData.upi)
-      newErrors.upi = "UPI ID is required";
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
   // Handle proceed to save order data
   const handleProceed = async () => {
-    if (validateForm()) {
-      try {
-        const response = await axios.post(
-          "http://localhost:3002/orders",
-          orderData
-        );
-        console.log("Order saved successfully:", response.data);
+    try {
+      const response = await axios.post(
+        "http://localhost:3002/orders",
+        orderData
+      );
+      console.log("Order saved successfully:", response.data);
 
-        // Navigate to the payment success page with order details
-        navigate("/payment-success", { state: { orderData } });
-      } catch (error) {
-        console.error("Error saving order details:", error);
-      }
+      // Navigate to the payment success page with order details
+      navigate("/payment-success", { state: { orderData } });
+    } catch (error) {
+      console.error("Error saving order details:", error);
     }
   };
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
       {/* Payment Form Section */}
@@ -104,55 +70,34 @@ const PaymentForm = () => {
           <div className="grid grid-cols-2 gap-6">
             <input
               type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
               placeholder="Name"
               className="border p-2 rounded"
             />
-            {errors.name && <p className="text-red-500">{errors.name}</p>}
             <input
               type="text"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
               placeholder="Phone"
               className="border p-2 rounded"
             />
-            {errors.phone && <p className="text-red-500">{errors.phone}</p>}
             <input
               type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
               placeholder="Email"
               className="border p-2 rounded"
             />
-            {errors.email && <p className="text-red-500">{errors.email}</p>}
             <input
               type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
               placeholder="Address"
               className="border p-2 rounded col-span-2"
             />
-            {errors.address && <p className="text-red-500">{errors.address}</p>}
           </div>
           <div className="mt-4">
             {paymentMethod === "UPI" && (
-              <>
-                <input
-                  type="text"
-                  name="upi"
-                  value={formData.upi}
-                  onChange={handleChange}
-                  placeholder="UPI"
-                  className="border p-2 rounded w-full"
-                />
-                {errors.upi && <p className="text-red-500">{errors.upi}</p>}
-              </>
+              <input
+                type="text"
+                placeholder="UPI"
+                className="border p-2 rounded w-full"
+              />
             )}
+            {/* <div className="mt-2 text-center">Or</div> */}
           </div>
           <button
             type="submit"

@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
 
 function PaymentSuccess() {
   const location = useLocation();
@@ -7,11 +8,11 @@ function PaymentSuccess() {
   const { orderData: orderDetails } = location.state || {};
 
   if (!orderDetails) {
-    return <p>No order details available.</p>; // Fallback if no order details
+    return <p>No order details available.</p>;
   }
 
   const {
-    product,
+    product_name: productName,
     quantity,
     total_price: totalPrice,
     payment_method: paymentMethod,
@@ -20,21 +21,20 @@ function PaymentSuccess() {
   } = orderDetails;
 
   const generateInvoice = () => {
-    const invoiceContent = `
-      Invoice\n
-      Product Name: ${product?.name || "N/A"}\n
-      Quantity: ${quantity}\n
-      Total Amount: ₹${totalPrice}\n
-      Payment Method: ${paymentMethod}\n
-      Tracking ID: ${trackingID}\n
-      Delivery Date: ${deliveryDate}\n
-    `;
+    const doc = new jsPDF();
 
-    const blob = new Blob([invoiceContent], { type: "text/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "invoice.pdf";
-    link.click();
+    doc.setFontSize(18);
+    doc.text("Invoice", 10, 10);
+
+    doc.setFontSize(12);
+    doc.text(`Product Name: ${productName}`, 10, 20);
+    doc.text(`Quantity: ${quantity}`, 10, 30);
+    doc.text(`Total Amount: ₹${totalPrice}`, 10, 40);
+    doc.text(`Payment Method: ${paymentMethod}`, 10, 50);
+    doc.text(`Tracking ID: ${trackingID}`, 10, 60);
+    doc.text(`Delivery Date: ${deliveryDate}`, 10, 70);
+
+    doc.save("invoice.pdf");
   };
 
   return (
@@ -47,7 +47,7 @@ function PaymentSuccess() {
           <h3 className="font-bold text-lg">Order Summary</h3>
           <div className="flex justify-between my-2">
             <p>Product:</p>
-            <p>{product?.name || "N/A"}</p>
+            <p>{productName || "N/A"}</p>
           </div>
           <div className="flex justify-between my-2">
             <p>Quantity:</p>

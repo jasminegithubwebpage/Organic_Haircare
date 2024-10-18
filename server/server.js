@@ -2,12 +2,12 @@ const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
 require("dotenv").config();
-const multer = require('multer');
+const multer = require("multer");
 const app = express();
 const port = 3002;
-const path = require('path');
-app.use(express.static('public'));
-const bcrypt = require('bcrypt');
+const path = require("path");
+app.use(express.static("public"));
+const bcrypt = require("bcrypt");
 
 ///CORS Middleware
 app.use(
@@ -112,7 +112,6 @@ app.get("/products/:id", async (req, res) => {
   }
 });
 
-
 // app.get('/products/:id/ingredients', async (req, res) => {
 //   const productId = req.params.id;
 //   try {
@@ -127,29 +126,25 @@ app.get("/products/:id", async (req, res) => {
 //     res.status(500).json({ error: error.message });
 //   }
 // });
-app.get('/products/:id/ingredients', async (req, res) => {
+app.get("/products/:id/ingredients", async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
       "SELECT ingredient FROM product_ingredients WHERE id = $1",
       [productId]
     );
-    
+
     // Flatten the result to return individual ingredient objects
-    const ingredients = result.rows.flatMap(row => 
-      row.ingredient.map(ingredient => ({ name: ingredient }))
+    const ingredients = result.rows.flatMap((row) =>
+      row.ingredient.map((ingredient) => ({ name: ingredient }))
     );
-    
+
     //console.log(ingredients);
     res.json(ingredients);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-
-
-
 
 // //fetch the review
 // app.get("/products/:id/reviews", async (req, res) => {
@@ -158,7 +153,7 @@ app.get('/products/:id/ingredients', async (req, res) => {
 //     const result = await pool.query(
 //       "SELECT * FROM product_reviews WHERE id = $1",
 //       [productId]
-     
+
 //     );
 //     console.log(result.rows);
 //     res.json(result.rows);
@@ -182,7 +177,6 @@ app.post("/reviews", async (req, res) => {
     res.status(500).send("Error adding review");
   }
 });
-
 
 //fetch review
 // Fetch the reviews for a product
@@ -222,19 +216,18 @@ app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-
 // Endpoint to fetch products
-app.get('/dashboard/products', async (req, res) => {
+app.get("/dashboard/products", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products'); // Adjust table name if necessary
+    const result = await pool.query("SELECT * FROM products"); // Adjust table name if necessary
     res.json(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server Error');
+    res.status(500).send("Server Error");
   }
 });
 
-app.get('/dashboard/inventory', async (req, res) => {
+app.get("/dashboard/inventory", async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -250,41 +243,47 @@ app.get('/dashboard/inventory', async (req, res) => {
       LEFT JOIN 
         product_sales ps ON p.id = ps.product_id;
     `;
-    
+
     const result = await pool.query(query);
     res.json(result.rows);
     //console.log(result.rows);
   } catch (error) {
-    console.error('Error fetching inventory data:', error); // Log error details
-    res.status(500).send('Server Error');
+    console.error("Error fetching inventory data:", error); // Log error details
+    res.status(500).send("Server Error");
   }
 });
 
 const storage = multer.diskStorage({
-  destination: './public/assets/', // Save to the public/assets directory
+  destination: "./public/assets/", // Save to the public/assets directory
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)); // Add timestamp to the filename
-  }
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    ); // Add timestamp to the filename
+  },
 });
-
 
 // Initialize upload variable
 const upload = multer({
   storage: storage,
   limits: { fileSize: 1000000 }, // Limit file size to 1MB
-}).single('image_url');
+}).single("image_url");
 
-app.post('/AddProducts', (req, res) => {
+app.post("/AddProducts", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      return res.status(400).json({ success: false, message: 'File upload error' });
+      return res
+        .status(400)
+        .json({ success: false, message: "File upload error" });
     }
-    
+
     const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
+    const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative path
 
     if (!name) {
-      return res.status(400).json({ success: false, message: 'Product name is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Product name is required" });
     }
 
     try {
@@ -297,19 +296,18 @@ app.post('/AddProducts', (req, res) => {
       const result = await pool.query(query, values);
       res.status(201).json({ success: true, product: result.rows[0] });
     } catch (error) {
-      console.error('Error adding product:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
+      console.error("Error adding product:", error);
+      res.status(500).json({ success: false, message: "Server error" });
     }
   });
 });
 
-
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
     // Query to fetch user from the database
-    const query = 'SELECT * FROM users WHERE username = $1 AND password = $2';
+    const query = "SELECT * FROM users WHERE username = $1 AND password = $2";
     const values = [username, password];
     const result = await pool.query(query, values);
 
@@ -317,73 +315,92 @@ app.post('/login', async (req, res) => {
       const user = result.rows[0];
 
       // Check the role and send the corresponding redirect URL
-      if (user.role === 'superadmin') {
-        res.json({ message: 'Login successful', role: 'superadmin', redirectUrl: '/superadmin-dashboard' });
-      } else if (user.role === 'admin') {
-        res.json({ message: 'Login successful', role: 'admin', redirectUrl: '/dashboard' });
-      } else if (user.role === 'user') {
-        res.json({ message: 'Login successful', role: 'user', redirectUrl: '/products' });
+      if (user.role === "superadmin") {
+        res.json({
+          message: "Login successful",
+          role: "superadmin",
+          redirectUrl: "/superadmin-dashboard",
+        });
+      } else if (user.role === "admin") {
+        res.json({
+          message: "Login successful",
+          role: "admin",
+          redirectUrl: "/dashboard",
+        });
+      } else if (user.role === "user") {
+        res.json({
+          message: "Login successful",
+          role: "user",
+          redirectUrl: "/products",
+        });
       } else {
-        res.status(401).json({ message: 'Invalid role or unauthorized user' });
+        res.status(401).json({ message: "Invalid role or unauthorized user" });
       }
     } else {
-      res.status(401).json({ message: 'Invalid username or password' });
+      res.status(401).json({ message: "Invalid username or password" });
     }
   } catch (error) {
-    console.error('Error querying database:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error querying database:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // Delete product by ID
-app.delete('/DeleteProduct/:id', async (req, res) => {
+app.delete("/DeleteProduct/:id", async (req, res) => {
   const productId = req.params.id;
-  console.log('ID IS DELETED ROUTE');
+  console.log("ID IS DELETED ROUTE");
   try {
     // Query to delete the product by ID
-    const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [productId]);
-    const result2 = await pool.query('DELETE FROM  product_ingredients WHERE id = $1 RETURNING *', [productId]);
-    if (result.rowCount === 0 && result2.count===0) {
-      return res.status(404).json({ message: 'Product not found.' });
+    const result = await pool.query(
+      "DELETE FROM products WHERE id = $1 RETURNING *",
+      [productId]
+    );
+    const result2 = await pool.query(
+      "DELETE FROM  product_ingredients WHERE id = $1 RETURNING *",
+      [productId]
+    );
+    if (result.rowCount === 0 && result2.count === 0) {
+      return res.status(404).json({ message: "Product not found." });
     }
 
-    res.status(200).json({ message: 'Product deleted successfully.' });
+    res.status(200).json({ message: "Product deleted successfully." });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ message: 'Server error, could not delete product.' });
+    console.error("Error deleting product:", error);
+    res
+      .status(500)
+      .json({ message: "Server error, could not delete product." });
   }
 });
 
-
-
-
-app.post('/signup', async (req, res) => {
+app.post("/signup", async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
-  console.log('Received:', req.body);
+  console.log("Received:", req.body);
 
   if (password.trim() !== confirmPassword.trim()) {
-    return res.status(400).json({ message: 'Passwords do not match' });
+    return res.status(400).json({ message: "Passwords do not match" });
   }
 
   try {
-    const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userCheck = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
     if (userCheck.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const newUser = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
+      "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
       [username, email, password]
     );
 
-    res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
+    res
+      .status(201)
+      .json({ message: "User created successfully", user: newUser.rows[0] });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error("Error:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 });
-
 
 app.get("/user/:id", async (req, res) => {
   const userId = req.params.id;
@@ -402,8 +419,15 @@ app.get("/user/:id", async (req, res) => {
   }
 });
 
-app.post('/orders', async (req, res) => {
-  const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
+app.post("/orders", async (req, res) => {
+  const {
+    product_id,
+    quantity,
+    total_price,
+    payment_method,
+    tracking_id,
+    delivery_date,
+  } = req.body;
 
   try {
     const query = `
@@ -411,15 +435,44 @@ app.post('/orders', async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;`;
 
-    const values = [product_id, quantity, total_price, payment_method, tracking_id, delivery_date];
+    const values = [
+      product_id,
+      quantity,
+      total_price,
+      payment_method,
+      tracking_id,
+      delivery_date,
+    ];
 
     const result = await pool.query(query, values);
     res.status(201).json(result.rows[0]); // Respond with the newly created order
   } catch (error) {
-    console.error('Error saving order:', error);
-    res.status(500).json({ message: 'Error saving order details' });
+    console.error("Error saving order:", error);
+    res.status(500).json({ message: "Error saving order details" });
   }
 });
+app.post("/reset-password", async (req, res) => {
+  const { username, newPassword } = req.body;
+
+  try {
+    const result = await pool.query(
+      "UPDATE users SET password = $1 WHERE username = $2 RETURNING *",
+      [newPassword, username]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res
+      .status(500)
+      .json({ message: "Server error, could not update password" });
+  }
+});
+
 // app.post('/orders', async (req, res) => {
 //   const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
 
@@ -430,7 +483,7 @@ app.post('/orders', async (req, res) => {
 //     // Check current count
 //     const countQuery = 'SELECT count FROM products WHERE id = $1';
 //     const countResult = await pool.query(countQuery, [product_id]);
-    
+
 //     if (countResult.rows.length === 0) {
 //       return res.status(404).json({ message: 'Product not found' });
 //     }
@@ -475,44 +528,46 @@ app.post('/orders', async (req, res) => {
 //   }
 // });
 // Assuming you have already set up your pool for PostgreSQL
-app.get('/api/low-stock', async (req, res) => {
+app.get("/api/low-stock", async (req, res) => {
   try {
-    const query = 'SELECT id, count AS stock FROM products WHERE count < $1';
+    const query = "SELECT id, count AS stock FROM products WHERE count < $1";
     const values = [5]; // Set your low stock threshold here
     const result = await pool.query(query, values);
 
     // Return the list of low stock products
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Error fetching low stock products:', error);
-    res.status(500).json({ message: 'Error fetching low stock products' });
+    console.error("Error fetching low stock products:", error);
+    res.status(500).json({ message: "Error fetching low stock products" });
   }
 });
 
 // Get Orders
-app.get('/api/orders', async (req, res) => {
+app.get("/api/orders", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM orders ORDER BY order_date DESC');
+    const result = await pool.query(
+      "SELECT * FROM orders ORDER BY order_date DESC"
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error fetching orders');
+    res.status(500).send("Error fetching orders");
   }
 });
 
 // Get Users
-app.get('/api/users', async (req, res) => {
+app.get("/api/users", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users');
+    const result = await pool.query("SELECT * FROM users");
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error fetching users');
+    res.status(500).send("Error fetching users");
   }
 });
 
 // Assuming you're using Express and your database is set up
-app.patch('/api/products/:id', async (req, res) => {
+app.patch("/api/products/:id", async (req, res) => {
   const { id } = req.params;
   const { count, discount } = req.body;
 
@@ -521,40 +576,67 @@ app.patch('/api/products/:id', async (req, res) => {
     const values = [];
 
     if (count !== undefined) {
-      query = 'UPDATE products SET count = $1 WHERE id = $2';
+      query = "UPDATE products SET count = $1 WHERE id = $2";
       values.push(count, id);
     } else if (discount !== undefined) {
-      query = 'UPDATE products SET discount = $1 WHERE id = $2';
+      query = "UPDATE products SET discount = $1 WHERE id = $2";
       values.push(discount, id);
     }
 
     const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json({ message: 'Product updated successfully' });
+    res.status(200).json({ message: "Product updated successfully" });
   } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({ message: 'Error updating product' });
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Error updating product" });
   }
 });
 // Assuming you have a customers table and orders table
-app.get('/api/customers', async (req, res) => {
+// Assuming you have a customers table and orders table
+app.get("/api/customers", async (req, res) => {
   try {
     const query = `
-      SELECT c.id, c.name, c.email, COUNT(o.id) AS order_count
-      FROM users  c 
-      LEFT JOIN orders o ON c.id = o.customer_id
-      GROUP BY c.id
-      ORDER BY c.name;
+      SELECT 
+    id, 
+    username, 
+    email 
+FROM users
+WHERE role != 'superadmin' AND role != 'admin'
+ORDER BY username;
+
     `;
 
     const result = await pool.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Error fetching customer data:', error);
-    res.status(500).json({ message: 'Error fetching customer data' });
+    console.error("Error fetching customer data:", error);
+    res.status(500).json({ message: "Error fetching customer data" });
+  }
+});
+
+// Add User Route
+app.post("/api/user", async (req, res) => {
+  const { username, email, password, role } = req.body;
+
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    const query = `
+      INSERT INTO users (username, email, password, role) 
+      VALUES ($1, $2, $3, $4) RETURNING *;
+    `;
+    const values = [username, email, password, role];
+    const result = await pool.query(query, values);
+
+    res.status(201).json(result.rows[0]); // Send the created user as response
+  } catch (error) {
+    console.error("Error adding user:", error);
+    res.status(500).json({ message: "Failed to add user." });
   }
 });

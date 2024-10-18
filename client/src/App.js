@@ -8,6 +8,9 @@ import ProductDetail from "./pages/ProductDetail";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
+import DashboardCopy from "./pages/Dashboard";
+import SuperAdminLayout from "./components/AdminLayout copy";
+import AddUserForm from "./pages/AddUserForm";
 
 import DashInventory from "./pages/DashInventory";
 import DashProduct from "./pages/DashProduct";
@@ -24,6 +27,7 @@ import Contactus from "./pages/Contactus";
 // import Dashboard from "./pages/Dashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
+import ResetPasswordForm from "./pages/ResetPasswordForm";
 
 function App() {
   return (
@@ -69,7 +73,17 @@ function App() {
             </Layout>
           }
         />
+        <Route
+          path="/reset"
+          element={
+            <Layout>
+              <ResetPasswordForm />
+            </Layout>
+          }
+        />
         <Route path="/admin-dashboard" element={<Dashboard />} />
+        <Route path="/superdashboard" element={<SuperAdminLayout />} />
+
         <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
         <Route
           path="/products/:id"
@@ -153,6 +167,7 @@ function App() {
             </AdminLayout>
           }
         />
+        <Route path="/add-user" element={<AddUserForm />} />
       </Routes>
     </Router>
   );
