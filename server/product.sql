@@ -529,4 +529,3 @@ ALTER TABLE ONLY public.product_sales
 --
 -- PostgreSQL database dump complete
 --
-

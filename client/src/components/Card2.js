@@ -6,7 +6,7 @@ function Card2(props) {
         alt={props.heading}
         className="rounded-2xl card2Img"
       />
-      <h3 className="text-m300">{props.heading} hello</h3>
+      <h4 className="text-m300">{props.heading}</h4>
       <p className="text-n600 text-justify r16">{props.detail}</p>
     </div>
   );

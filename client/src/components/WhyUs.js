@@ -7,7 +7,7 @@ function WhyUs() {
       <h2 className="text-m500">Why Us?</h2>
       <div className="grid grid-cols-3 gap-10 p-10">
         {WhyUsContent.map((why) => (
-          <Card2 src={why.src} alt={why.heading} detail={why.detail} />
+          <Card2 src={why.src} alt={why.heading} heading={why.heading} detail={why.detail} />
         ))}
       </div>
     </div>
