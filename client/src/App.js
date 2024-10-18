@@ -14,12 +14,9 @@ import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
 import AddProduct from "./pages/AddProduct";
 import Login from "./pages/Login";
-<<<<<<< HEAD
-import UpdateProduct from "./pages/UpdateProduct"
-=======
+import UpdateProduct from "./pages/UpdateProduct";
 import About from "./pages/About";
 import Contactus from "./pages/Contactus";
->>>>>>> c40afa0880559a348e44d2e2e7f773220f5eeb25
 // import UserLogin from "./pages/UserLogin";
 // import Dashboard from "./pages/Dashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -44,7 +41,8 @@ function App() {
               <About />
             </Layout>
           }
-        /><Route
+        />
+        <Route
           path="/contact"
           element={
             <Layout>
@@ -60,7 +58,7 @@ function App() {
             </Layout>
           }
         />
-         <Route
+        <Route
           path="/login"
           element={
             <Layout>
@@ -68,8 +66,8 @@ function App() {
             </Layout>
           }
         />
-         <Route path="/admin-dashboard" element={<Dashboard />} />  
-         <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
+        <Route path="/admin-dashboard" element={<Dashboard />} />
+        <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
         <Route
           path="/products/:id"
           element={
@@ -82,15 +80,18 @@ function App() {
           path="/payment"
           element={
             <Layout>
-             
-      <PaymentForm />
-   
-              
-          
+              <PaymentForm />
             </Layout>
           }
         />
-        <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
+        <Route
+          path="/payment-success"
+          element={
+            <Layout>
+              <PaymentSuccess />
+            </Layout>
+          }
+        />
 
         <Route
           path="/dashboard"
@@ -116,7 +117,7 @@ function App() {
             </AdminLayout>
           }
         />
-         <Route
+        <Route
           path="/dashboard/update-product"
           element={
             <AdminLayout>
@@ -140,11 +141,17 @@ function App() {
             </AdminLayout>
           }
         />
-         <Route path="/add-product" element={<AdminLayout> <AddProduct /> </AdminLayout>} />
+        <Route
+          path="/add-product"
+          element={
+            <AdminLayout>
+              {" "}
+              <AddProduct />{" "}
+            </AdminLayout>
+          }
+        />
       </Routes>
-    
     </Router>
-    
   );
 }
 
