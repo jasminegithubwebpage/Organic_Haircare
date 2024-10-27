@@ -4,14 +4,16 @@ import Ingredients from "./Ingredients";
 import Review from "./Review";
 import ReviewForm from "./ReviewForm";
 import { useParams, useNavigate } from "react-router-dom";
-
+import { useUser }  from "../pages/UserContext";
 const ProductDetail = () => {
   const [product, setProduct] = useState({});
   const [ingredients, setIngredients] = useState([]);
   const [quantity, setQuantity] = useState(1); // Track quantity in ProductDetail
   const { id } = useParams();
   const navigate = useNavigate(); // useNavigate for routing
+  const { currentUser } = useUser();
 
+  console.log('Current in detail page User:', currentUser); 
   useEffect(() => {
     // Fetch product details
     axios.get(`http://localhost:3002/products/${id}`).then((response) => {

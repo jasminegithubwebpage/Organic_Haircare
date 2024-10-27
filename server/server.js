@@ -303,7 +303,6 @@ app.post('/AddProducts', (req, res) => {
   });
 });
 
-
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -316,16 +315,25 @@ app.post('/login', async (req, res) => {
     if (result.rows.length > 0) {
       const user = result.rows[0];
 
-      // Check the role and send the corresponding redirect URL
-      if (user.role === 'superadmin') {
-        res.json({ message: 'Login successful', role: 'superadmin', redirectUrl: '/superadmin-dashboard' });
-      } else if (user.role === 'admin') {
-        res.json({ message: 'Login successful', role: 'admin', redirectUrl: '/dashboard' });
-      } else if (user.role === 'user') {
-        res.json({ message: 'Login successful', role: 'user', redirectUrl: '/products' });
-      } else {
-        res.status(401).json({ message: 'Invalid role or unauthorized user' });
-      }
+      // Send the full user details along with the role and redirect URL
+      const responseData = {
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+        },
+        redirectUrl:
+          user.role === 'superadmin'
+            ? '/superadmin-dashboard'
+            : user.role === 'admin'
+            ? '/dashboard'
+            : '/products',
+      };
+
+      res.json(responseData);
     } else {
       res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -375,7 +383,7 @@ app.post('/signup', async (req, res) => {
       'INSERT INTO users (username, email, password, gender) VALUES ($1, $2, $3, $4) RETURNING *',
       [username, email, password, gender] // Insert gender into the users table
     );
-    console.log(newUser.rows[0]);
+    console.log('SignUP',newUser.rows[0]);
     res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
   } catch (error) {
     console.error('Error:', error);
@@ -412,7 +420,7 @@ app.post('/orders', async (req, res) => {
     address,
     order_date
   } = req.body; // Destructure the data from the request body
-   console.log(req.body);
+   //console.log(req.body);
   // Validate required fields
   if (!user_id || !product_id || !quantity || !total_price || !payment_method) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -458,7 +466,7 @@ app.post('/orders', async (req, res) => {
     await client.query(updateProductQuery, [updatedCount, product_id]);
 
     await client.query('COMMIT'); // Commit the transaction
-
+    console.log('ORDER RESULT',orderResult.rows[0]);
     // Return the created order
     res.status(201).json(orderResult.rows[0]);
   } catch (error) {

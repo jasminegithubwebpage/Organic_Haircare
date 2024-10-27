@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext'; // Import the useUser hook
 
 function Login() {
-  const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
+  const { setUser } = useUser(); // Access setCurrentUser from UserContext
   const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
   const [isUser, setIsUser] = useState(false); // Set false for non-user roles
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
@@ -24,6 +24,7 @@ function Login() {
       setIsUser(true);
     }
   };
+
   const handleLogin = async (e) => {
     e.preventDefault();
   
@@ -56,8 +57,9 @@ function Login() {
         setIsSignUpComplete(true); // Indicate sign-up success
         setIsSignUp(false); // Switch back to login mode
       } else {
-        setCurrentUser(data); // Store the entire user object
-        console.log('Current User after Login:', data);
+         // Store the entire user object
+        console.log('Current User after Login:', data.user); // Log the user data
+        setUser(data.user); // Set user data in context
         navigate(data.redirectUrl); // Navigate based on role
       }
     } else {

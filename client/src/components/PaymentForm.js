@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUser }  from "../pages/UserContext";
-
+//import { useContext } from 'react';
 
 const PaymentForm = () => {
   const location = useLocation();
@@ -42,17 +42,17 @@ const PaymentForm = () => {
   deliveryDate.setDate(deliveryDate.getDate() + 7);
   const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0];
 
-  const orderData = {
-    user_id: currentUser ? currentUser.id : null, // Add user ID here
-    product_id: product.id,
-    quantity,
-    total_price: totalPrice,
-    payment_method: paymentMethod,
-    tracking_id: trackingID,
-    delivery_date: formattedDeliveryDate,
-    address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-    order_date: new Date().toISOString().split('T')[0]
-  };
+  // const orderData = {
+  //   user_id: currentUser ? currentUser.id : null, // Add user ID here
+  //   product_id: product.id,
+  //   quantity,
+  //   total_price: totalPrice,
+  //   payment_method: paymentMethod,
+  //   tracking_id: trackingID,
+  //   delivery_date: formattedDeliveryDate,
+  //   address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+  //   order_date: new Date().toISOString().split('T')[0]
+  // };
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
@@ -60,14 +60,26 @@ const PaymentForm = () => {
   };
 
   const handleProceed = async () => {
+    const orderData = {
+        user_id: userId, // Ensure userId is passed here
+        product_id: product.id,
+        quantity,
+        total_price: totalPrice,
+        payment_method: paymentMethod,
+        tracking_id: trackingID,
+        delivery_date: formattedDeliveryDate,
+        address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+        order_date: new Date().toISOString().split('T')[0]
+    };
+
     try {
-      const response = await axios.post('http://localhost:3002/orders', orderData);
-      console.log('Order saved successfully:', response.data);
-      navigate('/payment-success', { state: { orderData } });
+        const response = await axios.post('http://localhost:3002/orders', orderData);
+        console.log('Order saved successfully:', response.data);
+        navigate('/payment-success', { state: { orderData } });
     } catch (error) {
-      console.error('Error saving order details:', error);
+        console.error('Error saving order details:', error);
     }
-  };
+};
 
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
