@@ -38,6 +38,7 @@ function Login() {
     if (isSignUp) {
       requestBody.email = e.target.email?.value; // Use optional chaining to avoid errors
       requestBody.confirmPassword = e.target['confirmPassword'].value;
+      requestBody.gender = e.target['gender'].value;
     }
   
     const endpoint = isSignUp ? 'signup' : 'login';
@@ -55,7 +56,8 @@ function Login() {
         setIsSignUpComplete(true); // Indicate sign-up success
         setIsSignUp(false); // Switch back to login mode
       } else {
-        setCurrentUser(requestBody.username); // Set current user
+        setCurrentUser(data); // Store the entire user object
+        console.log('Current User after Login:', data);
         navigate(data.redirectUrl); // Navigate based on role
       }
     } else {
@@ -143,7 +145,7 @@ function Login() {
                   />
                 </div>
               )}
-
+              
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
@@ -157,7 +159,41 @@ function Login() {
                   required
                 />
               </div>
-
+              {isSignUp && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700">Gender</label>
+    <div className="flex items-center space-x-4 mt-1">
+      <label className="flex items-center">
+        <input
+          type="radio"
+          name="gender"
+          value="Male"
+          required
+          className="mr-2"
+        />
+        Male
+      </label>
+      <label className="flex items-center">
+        <input
+          type="radio"
+          name="gender"
+          value="Female"
+          className="mr-2"
+        />
+        Female
+      </label>
+      <label className="flex items-center">
+        <input
+          type="radio"
+          name="gender"
+          value="Other"
+          className="mr-2"
+        />
+        Other
+      </label>
+    </div>
+  </div>
+)}
               {isSignUp && (
                 <div>
                   <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
@@ -173,6 +209,7 @@ function Login() {
                   />
                 </div>
               )}
+              
 
               <div>
                 <button

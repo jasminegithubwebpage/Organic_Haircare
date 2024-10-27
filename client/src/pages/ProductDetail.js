@@ -30,7 +30,8 @@ const ProductDetail = () => {
       return;
     }
     // Navigate to the payment page and pass product & quantity via state
-    navigate("/payment", { state: { product, quantity, id } });
+    navigate("/payment", { state: { product, quantity, id: id } });
+
   };
 
   console.log(id); // Check if the ID is being logged

@@ -1,58 +1,76 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios
+import axios from "axios";
+import { useUser }  from "../pages/UserContext";
+
 
 const PaymentForm = () => {
-  const location = useLocation(); // Retrieve data passed via state
-  const { product, quantity: initialQuantity } = location.state || {}; // Destructure product and quantity
-  const [quantity, setQuantity] = useState(initialQuantity || 1); // Default to 1 if not provided
-  const productPrice = Number(product?.price) || 0; 
-  const totalPrice = quantity * productPrice;
-  const [paymentMethod, setPaymentMethod] = useState("UPI"); // Default to UPI
-  const navigate = useNavigate();
+  const location = useLocation();
+  const { product, quantity: initialQuantity } = location.state || {};
+  const { currentUser } = useUser();
+
+  console.log('Current User:', currentUser);  // Check the structure
+  const userId = currentUser?.id || null;  // Safely access the ID
   
+  if (!userId) {
+    console.warn('User ID not found.');
+  } else {
+    console.log('User ID:', userId);
+  }
+  
+  const [quantity, setQuantity] = useState(initialQuantity || 1);
+  const productPrice = Number(product?.price) || 0;
+  const totalPrice = quantity * productPrice;
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const navigate = useNavigate();
+
+  const [address, setAddress] = useState({
+    area: "",
+    city: "",
+    state: "",
+    country: "",
+    zipcode: ""
+  });
+
   const handleIncrement = () => setQuantity(quantity + 1);
   const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
 
-  // Render a loading message if no product is passed via state
   if (!product) return <p>Loading payment details...</p>;
 
-  // Generate a random tracking ID (you can customize the format)
   const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  
-  // Get today's date and add 7 days for the delivery date
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 7);
-  
-  // Format the delivery date to a readable string (optional)
-  const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
-  // Prepare order data
+  const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0];
+
   const orderData = {
-   
-    product_id: product.id, // Ensure product.id exists
+    user_id: currentUser ? currentUser.id : null, // Add user ID here
+    product_id: product.id,
     quantity,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
-    delivery_date: formattedDeliveryDate, // Use the generated delivery date
+    delivery_date: formattedDeliveryDate,
+    address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+    order_date: new Date().toISOString().split('T')[0]
   };
 
-  // Handle proceed to save order data
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setAddress((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleProceed = async () => {
     try {
       const response = await axios.post('http://localhost:3002/orders', orderData);
       console.log('Order saved successfully:', response.data);
-      
-      // Navigate to the payment success page with order details
       navigate('/payment-success', { state: { orderData } });
     } catch (error) {
       console.error('Error saving order details:', error);
     }
   };
+
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
-      {/* Payment Form Section */}
       <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
         <h2 className="text-2xl font-bold mb-6">Payment</h2>
         <form onSubmit={(e) => { e.preventDefault(); handleProceed(); }}>
@@ -60,23 +78,24 @@ const PaymentForm = () => {
             <input type="text" placeholder="Name" className="border p-2 rounded" />
             <input type="text" placeholder="Phone" className="border p-2 rounded" />
             <input type="email" placeholder="Email" className="border p-2 rounded" />
-            <input type="text" placeholder="Address" className="border p-2 rounded col-span-2" />
+            <input type="text" placeholder="Area" name="area" value={address.area} onChange={handleAddressChange} className="border p-2 rounded" />
+            <input type="text" placeholder="City" name="city" value={address.city} onChange={handleAddressChange} className="border p-2 rounded" />
+            <input type="text" placeholder="State" name="state" value={address.state} onChange={handleAddressChange} className="border p-2 rounded" />
+            <input type="text" placeholder="Country" name="country" value={address.country} onChange={handleAddressChange} className="border p-2 rounded" />
+            <input type="text" placeholder="Zip Code" name="zipcode" value={address.zipcode} onChange={handleAddressChange} className="border p-2 rounded" />
           </div>
+
           <div className="mt-4">
             {paymentMethod === "UPI" && (
               <input type="text" placeholder="UPI" className="border p-2 rounded w-full" />
             )}
-           {/* <div className="mt-2 text-center">Or</div> */}
           </div>
-          <button
-            type="submit" className="mt-4 w-full bg-m500 text-white p-2 rounded"
-          >
+          <button type="submit" className="mt-4 w-full bg-m500 text-white p-2 rounded">
             Proceed
           </button>
         </form>
       </div>
 
-      {/* Order Summary Section */}
       <div className="bg-gray-100 p-8 rounded-lg shadow-md w-1/4 md:w-1/4 mt-8 md:mt-0">
         <div className="text-center">
           <h3 className="text-xl font-bold mb-4">Total Amount</h3>
@@ -95,7 +114,6 @@ const PaymentForm = () => {
             <p>${productPrice.toFixed(2)}</p>
           </div>
 
-          {/* Quantity Control */}
           <div className="flex justify-between p-2 items-center">
             <p>Quantity:</p>
             <div className="flex items-center">
@@ -141,6 +159,6 @@ const PaymentForm = () => {
       </div>
     </div>
   );
-}
+};
 
 export default PaymentForm;

@@ -1,12 +1,10 @@
-// UserContext.js
-import React, { createContext, useContext, useState } from "react";
+// src/pages/UserContext.js
+import React, { createContext, useContext, useState } from 'react';
 
-// Create a context for the user
-export const UserContext = createContext();
+const UserContext = createContext();
 
-// Create a provider component
 export const UserProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null); // Default is no user
+  const [currentUser, setCurrentUser] = useState(null);
 
   return (
     <UserContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -15,11 +13,4 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-// Create a custom hook to use the UserContext
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
-};
+export const useUser = () => useContext(UserContext);

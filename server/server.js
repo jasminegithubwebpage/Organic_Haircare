@@ -357,9 +357,8 @@ app.delete('/DeleteProduct/:id', async (req, res) => {
 
 
 
-
 app.post('/signup', async (req, res) => {
-  const { username, email, password, confirmPassword } = req.body;
+  const { username, email, password, confirmPassword, gender } = req.body; // Add gender to destructuring
   console.log('Received:', req.body);
 
   if (password.trim() !== confirmPassword.trim()) {
@@ -373,10 +372,10 @@ app.post('/signup', async (req, res) => {
     }
 
     const newUser = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, password]
+      'INSERT INTO users (username, email, password, gender) VALUES ($1, $2, $3, $4) RETURNING *',
+      [username, email, password, gender] // Insert gender into the users table
     );
-
+    console.log(newUser.rows[0]);
     res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
   } catch (error) {
     console.error('Error:', error);
@@ -401,25 +400,77 @@ app.get("/user/:id", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 app.post('/orders', async (req, res) => {
-  const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
+  const {
+    user_id,
+    product_id,
+    quantity,
+    total_price,
+    payment_method,
+    tracking_id,
+    delivery_date,
+    address,
+    order_date
+  } = req.body; // Destructure the data from the request body
+   console.log(req.body);
+  // Validate required fields
+  if (!user_id || !product_id || !quantity || !total_price || !payment_method) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
 
+  const client = await pool.connect(); // Get a client from the pool
   try {
-    const query = `
-      INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;`;
+    await client.query('BEGIN'); // Start a transaction
 
-    const values = [product_id, quantity, total_price, payment_method, tracking_id, delivery_date];
+    // Check if enough product stock is available
+    const productQuery = 'SELECT count FROM products WHERE id = $1';
+    const productResult = await client.query(productQuery, [product_id]);
 
-    const result = await pool.query(query, values);
-    res.status(201).json(result.rows[0]); // Respond with the newly created order
+    if (productResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const product = productResult.rows[0];
+
+    // Ensure there's enough stock for the requested quantity
+    if (product.count < quantity) {
+      return res.status(400).json({ message: 'Not enough product stock available' });
+    }
+
+    // Insert order into the orders table
+    const orderQuery = `
+      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `;
+
+    const values = [user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date];
+    
+    const orderResult = await client.query(orderQuery, values);
+
+    // Update the product count in the products table
+    const updatedCount = product.count - quantity; // Decrement the count by the purchased quantity
+    const updateProductQuery = `
+      UPDATE products
+      SET count = $1
+      WHERE id = $2;
+    `;
+    await client.query(updateProductQuery, [updatedCount, product_id]);
+
+    await client.query('COMMIT'); // Commit the transaction
+
+    // Return the created order
+    res.status(201).json(orderResult.rows[0]);
   } catch (error) {
-    console.error('Error saving order:', error);
-    res.status(500).json({ message: 'Error saving order details' });
+    await client.query('ROLLBACK'); // Rollback in case of an error
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Error creating order' });
+  } finally {
+    client.release(); // Release the client back to the pool
   }
 });
+
+
 // app.post('/orders', async (req, res) => {
 //   const { product_id, quantity, total_price, payment_method, tracking_id, delivery_date } = req.body;
 
