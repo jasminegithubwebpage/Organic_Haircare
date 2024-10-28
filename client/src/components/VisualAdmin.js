@@ -3,7 +3,7 @@ import axios from "axios";
 import { Pie, Bar } from "react-chartjs-2";
 import "chart.js/auto";
 
-function Visual1() {
+function VisualAdmin() {
     const [adminData, setAdminData] = useState([]);
     const [userData, setUserData] = useState([]);
     const [showAdminChart, setShowAdminChart] = useState(true); // State to toggle Admin Roles chart
@@ -98,4 +98,4 @@ function Visual1() {
     );
 }
 
-export default Visual1;
+export default VisualAdmin;

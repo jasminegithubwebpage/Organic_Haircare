@@ -15,7 +15,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-function Visual3() {
+function VisualSales() {
   const [salesData, setSalesData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [startDate, setStartDate] = useState(null);
@@ -118,4 +118,4 @@ function Visual3() {
   );
 }
 
-export default Visual3;
+export default VisualSales;

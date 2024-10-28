@@ -4,7 +4,7 @@ import 'chart.js/auto';
 import DatePicker from 'react-datepicker'; // For date range filters
 import "react-datepicker/dist/react-datepicker.css";
 
-const OrdersDashboard = () => {
+function VisualOrder(){
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [paymentFilter, setPaymentFilter] = useState('All');
@@ -179,4 +179,4 @@ const OrdersDashboard = () => {
   );
 };
 
-export default OrdersDashboard;
+export default VisualOrder;
