@@ -4,33 +4,16 @@ import { useUser } from "./UserContext"; // Import the useUser hook
 
 function Login() {
   const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
-  const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
-  const [isUser, setIsUser] = useState(false); // Set false for non-user roles
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
   const [isSignUpComplete, setIsSignUpComplete] = useState(false); // Track sign-up success
   const navigate = useNavigate();
-
-  const handleSwitch = (role) => {
-    setIsSignUpComplete(false); // Reset sign-up success state
-    setIsSignUp(false); // Reset sign-up mode when switching roles
-    if (role === "superadmin") {
-      setIsSuperAdmin(true);
-      setIsUser(false);
-    } else if (role === "admin") {
-      setIsSuperAdmin(false);
-      setIsUser(false);
-    } else if (role === "user") {
-      setIsSuperAdmin(false);
-      setIsUser(true);
-    }
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     const requestBody = {
       username: e.target.username.value,
       password: e.target.password.value,
-      role: isSuperAdmin ? "superadmin" : isUser ? "user" : "admin",
+      role: "user", // Set role to user directly
     };
 
     if (isSignUp) {
@@ -83,33 +66,6 @@ function Login() {
               : "Welcome Back! Let's Get Started"}
           </p>
 
-          <div className="flex justify-center mb-4">
-            <button
-              className={`px-4 py-2 mx-2 text-white rounded ${
-                isSuperAdmin ? "bg-burgundy" : "bg-gray-500"
-              }`}
-              onClick={() => handleSwitch("superadmin")}
-            >
-              Super Admin
-            </button>
-            <button
-              className={`px-4 py-2 mx-2 text-white rounded ${
-                !isSuperAdmin && !isUser ? "bg-burgundy" : "bg-gray-500"
-              }`}
-              onClick={() => handleSwitch("admin")}
-            >
-              Admin
-            </button>
-            <button
-              className={`px-4 py-2 mx-2 text-white rounded ${
-                isUser ? "bg-burgundy" : "bg-gray-500"
-              }`}
-              onClick={() => handleSwitch("user")}
-            >
-              User
-            </button>
-          </div>
-
           {!isSignUpComplete ? (
             <form className="space-y-6" onSubmit={handleLogin}>
               <div>
@@ -129,7 +85,7 @@ function Login() {
                 />
               </div>
 
-              {isUser && isSignUp && (
+              {isSignUp && (
                 <div>
                   <label
                     htmlFor="email"
@@ -189,15 +145,11 @@ function Login() {
                   type="submit"
                   className="w-full px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90"
                 >
-                  {isSignUp
-                    ? "Sign Up as User"
-                    : `Sign in as ${
-                        isSuperAdmin ? "Super Admin" : isUser ? "User" : "Admin"
-                      }`}
+                  {isSignUp ? "Sign Up" : "Sign In"}
                 </button>
               </div>
 
-              {isUser && !isSignUp && (
+              {!isSignUp && (
                 <p className="text-center text-sm text-gray-600 mt-6">
                   New User?{" "}
                   <span

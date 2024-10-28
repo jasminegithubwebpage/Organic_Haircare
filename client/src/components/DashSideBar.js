@@ -31,10 +31,6 @@ function DashSideBar() {
             <li className="px-4 py-2 text-lg hover:bg-m300">Inventory</li>
           </Link>
 
-          <Link to="/dashboard/product">
-            <li className="px-4 py-2 text-lg hover:bg-m300">Reports</li>
-          </Link>
-
           <Link to="/dashboard/messages">
             <li className="px-4 py-2 text-lg hover:bg-m300">Messages</li>
           </Link>

@@ -8,6 +8,7 @@ const port = 3002;
 const path = require("path");
 app.use(express.static("public"));
 const bcrypt = require("bcrypt");
+const fs = require("fs");
 
 ///CORS Middleware
 app.use(
@@ -253,32 +254,31 @@ app.get("/dashboard/inventory", async (req, res) => {
   }
 });
 
+// Set up storage for uploaded files
 // const storage = multer.diskStorage({
-//   destination: "./public/assets/", // Save to the public/assets directory
+//   destination: (req, file, cb) => {
+//     cb(null, "public/assets"); // Store uploaded files in "public/assets"
+//   },
 //   filename: (req, file, cb) => {
-//     cb(
-//       null,
-//       file.fieldname + "-" + Date.now() + path.extname(file.originalname)
-//     ); // Add timestamp to the filename
+//     cb(null, Date.now() + path.extname(file.originalname)); // Name files with timestamp to avoid conflicts
 //   },
 // });
 
-// Initialize upload variable
-// const upload = multer({
-//   storage: storage,
-//   limits: { fileSize: 1000000 }, // Limit file size to 1MB
-// }).single("image_url");
+// Initialize multer with the storage engine
+// const upload = multer({ storage }).single("image_url");
 
+// Handle POST request to add a new product
 // app.post("/AddProducts", (req, res) => {
 //   upload(req, res, async (err) => {
 //     if (err) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "File upload error" });
+//       return res.status(400).json({
+//         success: false,
+//         message: "File upload error",
+//       });
 //     }
 
 //     const { name, info, price, count, discount, added_date } = req.body;
-//     const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative path
+//     const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative image path
 
 //     if (!name) {
 //       return res
@@ -294,65 +294,17 @@ app.get("/dashboard/inventory", async (req, res) => {
 //       `;
 //       const values = [name, info, price, imageUrl, count, discount, added_date];
 //       const result = await pool.query(query, values);
-//       res.status(201).json({ success: true, product: result.rows[0] });
+
+//       res.status(201).json({
+//         success: true,
+//         product: result.rows[0], // Return the inserted product
+//       });
 //     } catch (error) {
 //       console.error("Error adding product:", error);
 //       res.status(500).json({ success: false, message: "Server error" });
 //     }
 //   });
 // });
-
-// Set up storage for uploaded files
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/assets"); // Store uploaded files in "public/assets"
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Name files with timestamp to avoid conflicts
-  },
-});
-
-// Initialize multer with the storage engine
-const upload = multer({ storage }).single("image_url");
-
-// Handle POST request to add a new product
-app.post("/AddProducts", (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        message: "File upload error",
-      });
-    }
-
-    const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.filename}` : ""; // Save relative image path
-
-    if (!name) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Product name is required" });
-    }
-
-    try {
-      const query = `
-        INSERT INTO products (name, info, price, image_url, count, discount, added_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *;
-      `;
-      const values = [name, info, price, imageUrl, count, discount, added_date];
-      const result = await pool.query(query, values);
-
-      res.status(201).json({
-        success: true,
-        product: result.rows[0], // Return the inserted product
-      });
-    } catch (error) {
-      console.error("Error adding product:", error);
-      res.status(500).json({ success: false, message: "Server error" });
-    }
-  });
-});
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -728,4 +680,130 @@ app.post("/api/user", async (req, res) => {
     console.error("Error adding user:", error);
     res.status(500).json({ message: "Failed to add user." });
   }
+});
+
+
+// data visualization
+
+// Route to get all admin users
+app.get('/api/admin-users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM admin_users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Orders
+app.get('/api/orders', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM orders');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+// product sales route
+app.get('/api/product-sales', async (req, res) => {
+  try {
+    console.log("Fetching product sales data...");
+    const { rows: sales } = await pool.query('SELECT * FROM product_sales');
+    console.log("Sales data:", sales); // Check if data is returned
+    res.json(sales);
+  } catch (error) {
+    console.error("Error retrieving sales data:", error);
+    res.status(500).json({ error: "Failed to retrieve sales data" });
+  }
+});
+
+
+
+// Serve static files from the "public" folder
+app.use(express.static("public"));
+
+// Ensure "public/assets" folder exists
+const assetFolder = path.join(__dirname, "public/assets");
+if (!fs.existsSync(assetFolder)) {
+  fs.mkdirSync(assetFolder, { recursive: true });
+  console.log("Created 'public/assets' folder.");
+} else {
+  console.log("'public/assets' folder already exists.");
+}
+
+// Configure multer storage for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log("Attempting to save file to:", assetFolder); // Absolute path for debug
+    cb(null, assetFolder); // Use absolute path to ensure correct directory
+  },
+  filename: (req, file, cb) => {
+    console.log("Saving with original filename:", file.originalname); // Log filename
+    cb(null, file.originalname); // Use original filename
+  },
+});
+
+const upload = multer({ storage }).single("image_url");
+
+// Endpoint to add a new product
+app.post("/AddProducts", (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error("Multer file upload error:", err); // Log any multer error
+      return res.status(400).json({
+        success: false,
+        message: "File upload error",
+      });
+    }
+
+    // Log file details to confirm multer processed the file
+    if (req.file) {
+      console.log("File uploaded successfully:", req.file);
+    } else {
+      console.log("No file uploaded.");
+    }
+
+    const { name, info, price, count, discount, added_date } = req.body;
+    const imageUrl = req.file ? `/assets/${req.file.originalname}` : ""; // Relative path for database
+
+    if (!name) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Product name is required" });
+    }
+
+    try {
+      const query = `
+        INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *;
+      `;
+      const values = [name, info, price, imageUrl, count, discount, added_date];
+      const result = await pool.query(query, values);
+
+      console.log("Image URL saved in database:", imageUrl); // Log saved image URL
+
+      res.status(201).json({
+        success: true,
+        product: result.rows[0], // Return inserted product
+      });
+    } catch (error) {
+      console.error("Error adding product to database:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
 });

@@ -2,83 +2,83 @@ import React, { useState } from "react";
 import axios from "axios";
 
 function AddProduct() {
-  // Initialize state for product form fields
   const [product, setProduct] = useState({
     name: "",
     info: "",
     price: "",
-    image_url: null, // Image file
+    image_url: null,
     count: "",
     discount: "",
     added_date: "",
   });
+  
+  const [message, setMessage] = useState(""); // State for displaying messages
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image_url") {
-      // Handle file input for image
-      const file = files[0]; // Select the first file uploaded
+      const file = files[0];
       setProduct({
         ...product,
-        image_url: file, // Set the image file object
+        image_url: file,
       });
     } else {
       setProduct({
         ...product,
-        [name]: value, // Set other field values
+        [name]: value,
       });
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Create a new FormData object
     const formData = new FormData();
     formData.append("name", product.name);
     formData.append("info", product.info);
     formData.append("price", product.price);
-    formData.append("image_url", product.image_url); // Add image file
+    formData.append("image_url", product.image_url);
     formData.append("count", product.count);
     formData.append("discount", product.discount);
     formData.append("added_date", product.added_date);
 
     try {
-      // Send POST request with form data to the backend
       const response = await axios.post(
         "http://localhost:3002/AddProducts",
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Ensure it's multipart
+            "Content-Type": "multipart/form-data",
           },
         }
       );
       console.log("Product added:", response.data);
-      alert("Product added successfully!");
+      setMessage("Product added successfully!");
 
       // Reset the form after successful submission
       setProduct({
         name: "",
         info: "",
         price: "",
-        image_url: null, // Reset image field
+        image_url: null,
         count: "",
         discount: "",
         added_date: "",
       });
     } catch (error) {
       console.error("Error adding product:", error);
-      alert("Failed to add product");
+      setMessage("Failed to add product. Please try again.");
     }
   };
 
   return (
     <div className="max-w-lg mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-6">Add New Product</h1>
+      
+      {/* Display success or error message */}
+      {message && <p className="text-center text-lg mb-4 text-green-500">{message}</p>}
+
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
