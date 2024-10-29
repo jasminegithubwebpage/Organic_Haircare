@@ -7,10 +7,10 @@ import { useUser }  from "../pages/UserContext";
 const PaymentForm = () => {
   const location = useLocation();
   const { product, quantity: initialQuantity } = location.state || {};
-  const { currentUser } = useUser();
-
-  console.log('Current User:', currentUser);  // Check the structure
-  const userId = currentUser?.id || null;  // Safely access the ID
+  const { user } = useUser();  // Use 'user' instead of 'currentUser'
+  console.log('Order Detail',product);
+  console.log('Current in Payment page User:', user); 
+  const userId = user?.id || null;  // Safely access the ID
   
   if (!userId) {
     console.warn('User ID not found.');
@@ -61,21 +61,23 @@ const PaymentForm = () => {
 
   const handleProceed = async () => {
     const orderData = {
-        user_id: userId, // Ensure userId is passed here
-        product_id: product.id,
-        quantity,
-        total_price: totalPrice,
-        payment_method: paymentMethod,
-        tracking_id: trackingID,
-        delivery_date: formattedDeliveryDate,
-        address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-        order_date: new Date().toISOString().split('T')[0]
-    };
-
+      user_id: userId, 
+      product_id: product.id,
+      product_name: product.name,  // Add product name here
+      quantity,
+      total_price: totalPrice,
+      payment_method: paymentMethod,
+      tracking_id: trackingID,
+      delivery_date: formattedDeliveryDate,
+      address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+      order_date: new Date().toISOString().split('T')[0]
+  };
+  
     try {
         const response = await axios.post('http://localhost:3002/orders', orderData);
         console.log('Order saved successfully:', response.data);
-        navigate('/payment-success', { state: { orderData } });
+        navigate('/payment-success', { state: { orderData, productName: product.name } });
+
     } catch (error) {
         console.error('Error saving order details:', error);
     }

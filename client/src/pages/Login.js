@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from './UserContext'; // Import the useUser hook
 
 function Login() {
-  const { setUser } = useUser(); // Access setCurrentUser from UserContext
+  const { setUser } = useUser() || {}; // Add fallback to avoid undefined access
+  if (!setUser) {
+    console.error('setUser is not available. Ensure UserProvider is wrapped properly.');
+  }
   const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
   const [isUser, setIsUser] = useState(false); // Set false for non-user roles
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login

@@ -11,9 +11,9 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1); // Track quantity in ProductDetail
   const { id } = useParams();
   const navigate = useNavigate(); // useNavigate for routing
-  const { currentUser } = useUser();
-
-  console.log('Current in detail page User:', currentUser); 
+  const { user } = useUser();  // Use 'user' instead of 'currentUser'
+  console.log('Current in detail page User:', user);  // Check if 'user' is logged properly
+  
   useEffect(() => {
     // Fetch product details
     axios.get(`http://localhost:3002/products/${id}`).then((response) => {

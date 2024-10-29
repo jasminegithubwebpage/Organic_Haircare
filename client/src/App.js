@@ -8,7 +8,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
-
+import { UserProvider } from './pages/UserContext';
 import DashInventory from "./pages/DashInventory";
 import DashProduct from "./pages/DashProduct";
 import PaymentForm from "./components/PaymentForm";
@@ -24,6 +24,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
 
 function App() {
   return (
+    <UserProvider>
     <Router>
       <Routes>
         <Route
@@ -152,6 +153,7 @@ function App() {
         />
       </Routes>
     </Router>
+    </UserProvider>
   );
 }
 

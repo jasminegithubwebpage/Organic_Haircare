@@ -4,25 +4,24 @@ import { useLocation, useNavigate } from "react-router-dom";
 function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { orderData: orderDetails } = location.state || {};
+  const { productName, orderData } = location.state || {}; // Correct destructuring
 
-  if (!orderDetails) {
+  if (!orderData) {
     return <p>No order details available.</p>; // Fallback if no order details
   }
 
   const {
-    product,
     quantity,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
     delivery_date: deliveryDate,
-  } = orderDetails;
+  } = orderData;
 
   const generateInvoice = () => {
     const invoiceContent = `
       Invoice\n
-      Product Name: ${product?.name || "N/A"}\n
+      Product Name: ${productName || "N/A"}\n
       Quantity: ${quantity}\n
       Total Amount: ₹${totalPrice}\n
       Payment Method: ${paymentMethod}\n
@@ -30,7 +29,7 @@ function PaymentSuccess() {
       Delivery Date: ${deliveryDate}\n
     `;
 
-    const blob = new Blob([invoiceContent], { type: "text/pdf" });
+    const blob = new Blob([invoiceContent], { type: "application/pdf" }); // Correct type
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "invoice.pdf";
@@ -47,7 +46,7 @@ function PaymentSuccess() {
           <h3 className="font-bold text-lg">Order Summary</h3>
           <div className="flex justify-between my-2">
             <p>Product:</p>
-            <p>{product?.name || "N/A"}</p>
+            <p>{productName || "N/A"}</p> {/* Correctly display product name */}
           </div>
           <div className="flex justify-between my-2">
             <p>Quantity:</p>

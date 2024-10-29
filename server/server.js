@@ -580,7 +580,7 @@ app.patch('/api/products/:id', async (req, res) => {
     const values = [];
 
     if (count !== undefined) {
-      query = 'UPDATE products SET count = $1 WHERE id = $2';
+      query = 'UPDATE products SET count = count+$1 WHERE id = $2';
       values.push(count, id);
     } else if (discount !== undefined) {
       query = 'UPDATE products SET discount = $1 WHERE id = $2';
