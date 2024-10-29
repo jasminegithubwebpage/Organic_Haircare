@@ -36,6 +36,7 @@ import AdminsLogin from "./pages/AdminsLogin";
 
 // visual
 import Reports from "./pages/Reports";
+import Cart from "./components/Cart";
 
 function App() {
   return (
@@ -73,6 +74,14 @@ function App() {
             </Layout>
           }
         />
+                <Route
+          path="/cart"
+          element={
+            <Layout>
+              <Cart />
+            </Layout>
+          }
+        />
         <Route
           path="/login"
           element={
@@ -100,14 +109,14 @@ function App() {
             </Layout>
           }
         />
-        <Route
+        {/* <Route
           path="/payment"
           element={
             <Layout>
               <PaymentForm />
             </Layout>
           }
-        />
+        /> */}
         <Route
           path="/payment-success"
           element={

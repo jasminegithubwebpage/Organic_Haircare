@@ -208,3 +208,12 @@ div > span {
   height:600px;
 }
 
+.proImg{
+  height: 165px;
+  width: 130px;
+  border-radius: 6px;
+}
+
+/* .product-info{
+  width: 500px;
+} */

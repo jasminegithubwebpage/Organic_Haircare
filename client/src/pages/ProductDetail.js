@@ -26,16 +26,24 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-
   const handleBuyNow = async () => {
-    if (!product) {
-      console.error("Product not found!");
-      return;
+    try {
+      // Check if the user is authenticated
+      const response = await axios.get("http://localhost:3002/api/auth/check");
+      
+      if (response.data.isAuthenticated) {
+        // User is authenticated, proceed to payment
+        navigate("/payment", { state: { product, quantity, id } });
+      } else {
+        // User is not authenticated, redirect to login page
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error checking authentication:", error);
+      navigate("/login");
     }
-
-    // Navigate to the payment page and pass product & quantity via state
-    navigate("/payment", { state: { product, quantity, id } });
   };
+  
 
   // Add the conditional rendering here to wait for the product details
   if (!product.name) {
