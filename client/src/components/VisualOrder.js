@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import DatePicker from 'react-datepicker'; // For date range filters
+import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
-function VisualOrder(){
+function VisualOrder() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [paymentFilter, setPaymentFilter] = useState('All');
@@ -26,20 +26,16 @@ function VisualOrder(){
     fetchOrders();
   }, []);
 
-  // Filtering Function
   useEffect(() => {
     const filterOrders = () => {
       let result = orders;
 
-      // Filter by payment method
       if (paymentFilter !== 'All') {
         result = result.filter(order => order.payment_method === paymentFilter);
       }
 
-      // Filter by amount range
       result = result.filter(order => order.total_price >= amountRange[0] && order.total_price <= amountRange[1]);
 
-      // Filter by delivery date range
       if (dateRange[0] && dateRange[1]) {
         const [startDate, endDate] = dateRange;
         result = result.filter(order => {
@@ -54,9 +50,8 @@ function VisualOrder(){
     filterOrders();
   }, [orders, paymentFilter, amountRange, dateRange]);
 
-  // Chart Data Preparation Functions
   const getTotalPriceData = () => ({
-    labels: filteredOrders.map(order => `Order ${order.order_id}`),
+    labels: filteredOrders.map(order => order.product_name),
     datasets: [{
       label: 'Total Price',
       data: filteredOrders.map(order => order.total_price),
@@ -67,11 +62,17 @@ function VisualOrder(){
   });
 
   const getPaymentMethodData = () => {
+    console.log("Filtered Orders:", filteredOrders); // Check if filteredOrders is populated
+  
     const paymentCounts = filteredOrders.reduce((acc, order) => {
-      acc[order.payment_method] = (acc[order.payment_method] || 0) + 1;
+      if (order.payment_method) { // Check if payment_method exists
+        acc[order.payment_method] = (acc[order.payment_method] || 0) + 1;
+      }
       return acc;
     }, {});
-
+  
+    console.log("Payment Counts:", paymentCounts); // Check the output of paymentCounts
+  
     return {
       labels: Object.keys(paymentCounts),
       datasets: [{
@@ -80,9 +81,10 @@ function VisualOrder(){
       }],
     };
   };
+  
 
   const getQuantityData = () => ({
-    labels: filteredOrders.map(order => `Product ${order.product_id}`),
+    labels: filteredOrders.map(order => order.product_name),
     datasets: [{
       label: 'Quantity Sold',
       data: filteredOrders.map(order => order.quantity),
@@ -156,7 +158,7 @@ function VisualOrder(){
       {/* Charts */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
         <div>
-          <h3>Total Price by Order</h3>
+          <h3>Total Price by Product</h3>
           <Bar data={getTotalPriceData()} />
         </div>
 
@@ -177,6 +179,6 @@ function VisualOrder(){
       </div>
     </div>
   );
-};
+}
 
 export default VisualOrder;

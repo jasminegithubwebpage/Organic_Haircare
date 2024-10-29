@@ -70,7 +70,9 @@ CREATE TABLE public.orders (
     payment_method character varying(50) NOT NULL,
     tracking_id character varying(50) NOT NULL,
     delivery_date date NOT NULL,
-    order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    order_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    user_id integer DEFAULT 0 NOT NULL,
+    address character varying(255)
 );
 
 
@@ -238,7 +240,8 @@ CREATE TABLE public.users (
     email character varying(100) NOT NULL,
     password character varying(255) NOT NULL,
     role character varying(50) DEFAULT 'user'::character varying,
-    address character varying(255)
+    address character varying(255),
+    gender character varying(10)
 );
 
 
@@ -322,14 +325,25 @@ COPY public.admin_users (id, username, password, role, email, created_at) FROM s
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.orders (order_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, order_date) FROM stdin;
-4	3	2	34.98	Pay On Delivery	TRACK-RLQNKSOL0	2024-10-24	2024-10-17 23:03:28.518499
-6	3	3	52.47	UPI	TRACK-WMZOJ5FR0	2024-10-24	2024-10-18 05:29:23.560177
-5	3	3	52.47	UPI	TRACK-WMZOJ5FR0	2024-10-24	2024-10-18 05:29:23.578099
-7	3	1	17.49	Pay On Delivery	TRACK-SGY45XPPL	2024-10-25	2024-10-18 05:30:27.242122
-8	3	3	52.47	Pay On Delivery	TRACK-YZ4YIV52L	2024-10-25	2024-10-18 05:41:33.923948
-9	20	3	65.97	Pay On Delivery	TRACK-ADNWZGS3Y	2024-10-25	2024-10-18 06:46:41.446986
-10	1	1	19.99	Pay On Delivery	TRACK-RZ9H6UPOX	2024-10-25	2024-10-18 10:20:25.980164
+COPY public.orders (order_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, order_date, user_id, address) FROM stdin;
+4	3	2	34.98	Pay On Delivery	TRACK-RLQNKSOL0	2024-10-24	2024-10-17 23:03:28.518499	5	\N
+6	3	3	52.47	UPI	TRACK-WMZOJ5FR0	2024-10-24	2024-10-18 05:29:23.560177	5	\N
+5	3	3	52.47	UPI	TRACK-WMZOJ5FR0	2024-10-24	2024-10-18 05:29:23.578099	5	\N
+7	3	1	17.49	Pay On Delivery	TRACK-SGY45XPPL	2024-10-25	2024-10-18 05:30:27.242122	5	\N
+8	3	3	52.47	Pay On Delivery	TRACK-YZ4YIV52L	2024-10-25	2024-10-18 05:41:33.923948	5	\N
+9	20	3	65.97	Pay On Delivery	TRACK-ADNWZGS3Y	2024-10-25	2024-10-18 06:46:41.446986	5	\N
+10	1	1	19.99	Pay On Delivery	TRACK-RZ9H6UPOX	2024-10-25	2024-10-18 10:20:25.980164	5	\N
+11	4	1	21.99	UPI	TRACK-2HA54MWKC	2024-10-25	2024-10-18 10:29:39.870962	5	\N
+12	4	1	21.99	Pay On Delivery	TRACK-E91YV2ZCR	2024-10-25	2024-10-18 10:34:25.417532	5	\N
+16	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.338091	5	\N
+14	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.339517	5	\N
+17	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.510096	5	\N
+13	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.499248	5	\N
+18	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.336155	5	\N
+15	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:28.333778	5	\N
+19	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:29.307368	5	\N
+20	4	1	21.99	Pay On Delivery	TRACK-52UW90W8F	2024-10-25	2024-10-18 10:50:29.537931	5	\N
+21	12	1	13.49	UPI	TRACK-XXT4I1PCB	2024-11-02	2024-10-26 12:17:11.626985	5	\N
 \.
 
 
@@ -375,6 +389,7 @@ COPY public.product_reviews (review_id, id, user_name, comment, likes, dislikes,
 41	8	abcd	Good Product! Thanks 	0	0	5
 42	20	jas	My Name also Jasmine Thank guys for this product!!	0	0	5
 46	1	User1	Awesome Product!	0	0	5
+47	1	pattu	Good one !!!	0	0	5
 \.
 
 
@@ -439,13 +454,19 @@ COPY public.products (id, name, info, price, image_url, count, discount, added_d
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, username, email, password, role, address) FROM stdin;
-5	sample	sample@gmail.com	sample123	user	\N
-6	abc	abc@gmail.com	abc	user	\N
-7	abcd	abcd@gmail.com	abcd	user	\N
-9	admin	admin@gmail.com	admin123	admin	\N
-10	superadmin	superadmin@gmail.com	superadmin123	superadmin	\N
-11	jas	jasminejasmine0582@gmail.com	123	user	\N
+COPY public.users (id, username, email, password, role, address, gender) FROM stdin;
+5	sample	sample@gmail.com	sample123	user	\N	\N
+6	abc	abc@gmail.com	abc	user	\N	\N
+7	abcd	abcd@gmail.com	abcd	user	\N	\N
+9	admin	admin@gmail.com	admin123	admin	\N	\N
+10	superadmin	superadmin@gmail.com	superadmin123	superadmin	\N	\N
+11	jas	jasminejasmine0582@gmail.com	123	user	\N	\N
+12	prabha	prabha@gmail.com	12345	admin	\N	\N
+14	amma	amma123@gmail.com	amma	user	\N	\N
+15	pittu	pittu@gmail.com	123	user	\N	\N
+16	pattu	pattu@gmail.com	pattu	user	\N	Male
+17	fathima	fathima@gmail.com	123	user	\N	Female
+18	123	123@gmail.com	123	user	\N	Male
 \.
 
 
@@ -460,14 +481,14 @@ SELECT pg_catalog.setval('public.admin_users_id_seq', 2, true);
 -- Name: orders_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.orders_order_id_seq', 10, true);
+SELECT pg_catalog.setval('public.orders_order_id_seq', 28, true);
 
 
 --
 -- Name: product_reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.product_reviews_review_id_seq', 46, true);
+SELECT pg_catalog.setval('public.product_reviews_review_id_seq', 47, true);
 
 
 --
@@ -488,7 +509,7 @@ SELECT pg_catalog.setval('public.products_id_seq', 29, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 11, true);
+SELECT pg_catalog.setval('public.users_id_seq', 18, true);
 
 
 --
@@ -569,6 +590,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: orders fk_user; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --

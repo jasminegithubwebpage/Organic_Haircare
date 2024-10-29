@@ -20,7 +20,12 @@ function VisualSales() {
   const [filteredData, setFilteredData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [minQuantity, setMinQuantity] = useState(0);
+  const [maxQuantity, setMaxQuantity] = useState(Infinity);
+  const [selectedProducts, setSelectedProducts] = useState({});
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown visibility state
 
+  // Fetch data from backend
   useEffect(() => {
     fetch("http://localhost:3002/api/product-sales")
       .then((response) => {
@@ -34,6 +39,13 @@ function VisualSales() {
         if (Array.isArray(data)) {
           setSalesData(data);
           setFilteredData(data);
+
+          // Initialize checkboxes for each product
+          const initialProductSelection = data.reduce((acc, item) => {
+            acc[item.product_name] = true; // All products selected by default
+            return acc;
+          }, {});
+          setSelectedProducts(initialProductSelection);
         } else {
           console.error("Fetched data is not an array:", data);
           setSalesData([]);
@@ -55,11 +67,47 @@ function VisualSales() {
         (!endDate || saleDate <= endDate)
       );
     });
+    applyFilters(filtered);
+  };
+
+  const handleQuantityFilter = () => {
+    const filtered = salesData.filter((item) => {
+      return (
+        item.quantity_sold >= minQuantity &&
+        item.quantity_sold <= maxQuantity
+      );
+    });
+    applyFilters(filtered);
+  };
+
+  const handleCheckboxChange = (productName) => {
+    setSelectedProducts((prev) => ({
+      ...prev,
+      [productName]: !prev[productName],
+    }));
+  };
+
+  const applyFilters = (data) => {
+    const filtered = data.filter(
+      (item) =>
+        selectedProducts[item.product_name] &&
+        item.quantity_sold >= minQuantity &&
+        item.quantity_sold <= maxQuantity
+    );
     setFilteredData(filtered);
   };
 
+  useEffect(() => {
+    // Apply all filters whenever selectedProducts, minQuantity, maxQuantity, startDate, or endDate changes
+    handleDateFilter();
+  }, [selectedProducts, minQuantity, maxQuantity, startDate, endDate]);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen((prev) => !prev); // Toggle dropdown visibility
+  };
+
   const quantityChartData = {
-    labels: (filteredData || []).map((data) => `Product ${data.product_id}`),
+    labels: (filteredData || []).map((data) => data.product_name),
     datasets: [
       {
         label: "Quantity Sold",
@@ -70,7 +118,7 @@ function VisualSales() {
   };
 
   const valueChartData = {
-    labels: (filteredData || []).map((data) => `Product ${data.product_id}`),
+    labels: (filteredData || []).map((data) => data.product_name),
     datasets: [
       {
         label: "Total Sale Value",
@@ -87,18 +135,68 @@ function VisualSales() {
 
   return (
     <div>
-      <h2>Product Sales Visualization</h2>
+      <h2>Product Sales</h2>
+
+      {/* Date Filter */}
+      <div className="flex">
       <div>
+        <div>
         <label>Start Date:</label>
-        <DatePicker
-          selected={startDate}
-          onChange={(date) => setStartDate(date)}
-        />
+        <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} />
         <label>End Date:</label>
         <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} />
-        <button onClick={handleDateFilter}>Filter by Date</button>
+        </div>
+        <div>
+        <button className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90" onClick={handleDateFilter}>Filter by Date</button>
+        </div>
       </div>
 
+      {/* Quantity Filter */}
+      <div>
+        <div>
+        <label>Min Quantity Sold:</label>
+        <input
+          type="number"
+          value={minQuantity}
+          onChange={(e) => setMinQuantity(Number(e.target.value))}
+        />
+        <label>Max Quantity Sold:</label>
+        <input
+          type="number"
+          value={maxQuantity}
+          onChange={(e) => setMaxQuantity(Number(e.target.value) || Infinity)}
+        />
+        </div>
+        <div>
+        <button className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90" onClick={handleQuantityFilter}>Filter by Quantity</button>
+        </div>
+      </div>
+           {/* Toggle Dropdown for Product Selection */}
+           <button onClick={toggleDropdown} className="dropdown-toggle px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90">
+        Select Products
+      </button>
+      </div>
+
+ 
+
+      {/* Product Selection Dropdown */}
+      {isDropdownOpen && (
+        <div className="dropdown-menu">
+          <h3>Select Products to Include</h3>
+          {Object.keys(selectedProducts).map((productName) => (
+            <div key={productName}>
+              <input
+                type="checkbox"
+                checked={selectedProducts[productName]}
+                onChange={() => handleCheckboxChange(productName)}
+              />
+              <label>{productName}</label>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Charts */}
       {Array.isArray(filteredData) && filteredData.length > 0 ? (
         <>
           <div style={{ margin: "20px 0" }}>
@@ -114,6 +212,32 @@ function VisualSales() {
       ) : (
         <p>No sales data available to display.</p>
       )}
+
+      <style jsx>{`
+        .dropdown-toggle {
+          cursor: pointer;
+        }
+
+        .dropdown-menu {
+          position: fixed;
+          top: 20%;
+          right: 0;
+          width: 250px;
+          background-color: #f4f4f4;
+          border: 1px solid #ccc;
+          padding: 10px;
+          box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2);
+          transition: transform 0.3s ease-in-out;
+        }
+        
+        .dropdown-menu.show {
+          transform: translateX(0);
+        }
+
+        .dropdown-menu.hidden {
+          transform: translateX(100%);
+        }
+      `}</style>
     </div>
   );
 }
