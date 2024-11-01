@@ -21,6 +21,7 @@ import Contactus from "./pages/Contactus";
 // import Dashboard from "./pages/Dashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
+import MyCart from "./pages/MyCart";
 
 function App() {
   return (
@@ -32,6 +33,14 @@ function App() {
           element={
             <Layout>
               <LandingPage />
+            </Layout>
+          }
+        />
+         <Route
+          path="/mycart"
+          element={
+            <Layout>
+              <MyCart />
             </Layout>
           }
         />

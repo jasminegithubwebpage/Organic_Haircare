@@ -617,3 +617,71 @@ app.get('/api/customers', async (req, res) => {
     res.status(500).json({ message: 'Error fetching customer data' });
   }
 });
+
+// Add to Cart
+app.post("/cart", async (req, res) => {
+  const { product_id, product_name, quantity, price, user_id } = req.body;
+  try {
+    await pool.query(
+      "INSERT INTO cart (product_id, product_name, quantity, price, user_id) VALUES ($1, $2, $3, $4, $5)",
+      [product_id, product_name, quantity, price, user_id]
+    );
+    res.status(201).json({ message: "Product added to cart" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.get('/cart/:userId', async (req, res) => {
+  console.log('Inside server cart for user ID:', req.params.userId);
+  const userId = req.params.userId;
+  try {
+    const result = await pool.query(`
+      SELECT c.cart_id, c.user_id, c.quantity, c.price, 
+             p.name, p.image_url
+      FROM cart c
+      JOIN products p ON c.product_id = p.id
+      WHERE c.user_id = $1
+      ORDER BY c.created_at DESC;
+    `, [userId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+// DELETE /cart/:cartId - Remove item from cart
+app.delete('/cart/:cartId', async (req, res) => {
+  const cartId = req.params.cartId;
+  try {
+    await pool.query('DELETE FROM cart WHERE cart_id = $1', [cartId]);
+    res.status(204).send(); // No Content
+  } catch (error) {
+    console.error('Error deleting cart item:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
+
+// // Delete Product from Cart
+// app.delete("/cart/:id", async (req, res) => {
+//   const { id } = req.params;
+//   try {
+//     await pool.query("DELETE FROM cart WHERE cart_id = $1", [id]);
+//     res.json({ message: "Product removed from cart" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// Update Product Quantity
+app.put("/cart/:id", async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+  try {
+    await pool.query("UPDATE cart SET quantity = $1 WHERE cart_id = $2", [quantity, id]);
+    res.json({ message: "Quantity updated" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
