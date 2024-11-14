@@ -3,27 +3,35 @@ import axios from "axios";
 import Ingredients from "./Ingredients";
 import Review from "./Review";
 import ReviewForm from "./ReviewForm";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "../pages/UserContext";
 
 const ProductDetail = () => {
   const [product, setProduct] = useState({});
   const [ingredients, setIngredients] = useState([]);
   const [quantity, setQuantity] = useState(1); 
-  const [successMessage, setSuccessMessage] = useState(""); // Track success message
+  const [successMessage, setSuccessMessage] = useState(""); 
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
 
   useEffect(() => {
-    axios.get(`http://localhost:3002/products/${id}`).then((response) => {
-      setProduct(response.data);
-    });
+    const initialProduct = location.state?.product;
+    if (initialProduct) {
+      setProduct(initialProduct);
+    } else {
+      // Fetch product data if not passed via navigate
+      axios.get(`http://localhost:3002/products/${id}`).then((response) => {
+        setProduct(response.data);
+      });
+    }
 
+    // Fetch ingredients regardless of how we navigated
     axios.get(`http://localhost:3002/products/${id}/ingredients`).then((response) => {
       setIngredients(response.data);
     });
-  }, [id]);
+  }, [id, location.state]);
 
   const handleAddToCart = () => {
     const cartData = {
@@ -33,12 +41,11 @@ const ProductDetail = () => {
       price: product.price,
       user_id: user.id,
     };
-    console.log(cartData);
     axios
       .post("http://localhost:3002/cart", cartData)
       .then(() => {
         setSuccessMessage(`${product.name} added to cart successfully!`);
-        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 sec
+        setTimeout(() => setSuccessMessage(""), 3000); 
       })
       .catch((error) => console.error("Error adding to cart:", error));
   };

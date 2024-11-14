@@ -1,29 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useUser }  from "../pages/UserContext";
-//import { useContext } from 'react';
+import { useUser } from "../pages/UserContext";
 
 const PaymentForm = () => {
   const location = useLocation();
   const { product, quantity: initialQuantity } = location.state || {};
-  const { user } = useUser();  // Use 'user' instead of 'currentUser'
-  console.log('Order Detail',product);
-  console.log('Current in Payment page User:', user); 
-  const userId = user?.id || null;  // Safely access the ID
-  
-  if (!userId) {
-    console.warn('User ID not found.');
-  } else {
-    console.log('User ID:', userId);
-  }
-  
+  const { user } = useUser();
+  const userId = user?.id || null;
+  const navigate = useNavigate();
+
   const [quantity, setQuantity] = useState(initialQuantity || 1);
   const productPrice = Number(product?.price) || 0;
   const totalPrice = quantity * productPrice;
   const [paymentMethod, setPaymentMethod] = useState("UPI");
-  const navigate = useNavigate();
-
   const [address, setAddress] = useState({
     area: "",
     city: "",
@@ -32,56 +22,48 @@ const PaymentForm = () => {
     zipcode: ""
   });
 
-  const handleIncrement = () => setQuantity(quantity + 1);
-  const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
-
-  if (!product) return <p>Loading payment details...</p>;
-
-  const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  const deliveryDate = new Date();
-  deliveryDate.setDate(deliveryDate.getDate() + 7);
-  const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0];
-
-  // const orderData = {
-  //   user_id: currentUser ? currentUser.id : null, // Add user ID here
-  //   product_id: product.id,
-  //   quantity,
-  //   total_price: totalPrice,
-  //   payment_method: paymentMethod,
-  //   tracking_id: trackingID,
-  //   delivery_date: formattedDeliveryDate,
-  //   address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-  //   order_date: new Date().toISOString().split('T')[0]
-  // };
+  useEffect(() => {
+    if (!product || !userId) {
+      // Navigate back if data is missing
+      navigate("/mycart");
+    }
+  }, [product, userId, navigate]);
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
     setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleProceed = async () => {
-    const orderData = {
-      user_id: userId, 
-      product_id: product.id,
-      product_name: product.name,  // Add product name here
-      quantity,
-      total_price: totalPrice,
-      payment_method: paymentMethod,
-      tracking_id: trackingID,
-      delivery_date: formattedDeliveryDate,
-      address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-      order_date: new Date().toISOString().split('T')[0]
-  };
-  
-    try {
-        const response = await axios.post('http://localhost:3002/orders', orderData);
-        console.log('Order saved successfully:', response.data);
-        navigate('/payment-success', { state: { orderData, productName: product.name } });
+  const handleIncrement = () => setQuantity(quantity + 1);
+  const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
 
+  const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + 7);
+  const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0];
+
+  const orderData = {
+    user_id: userId,
+    product_id: product?.id,
+    product_name: product?.name,
+    quantity,
+    total_price: totalPrice,
+    payment_method: paymentMethod,
+    tracking_id: trackingID,
+    delivery_date: formattedDeliveryDate,
+    address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+    order_date: new Date().toISOString().split("T")[0]
+  };
+
+  const handleProceed = async () => {
+    try {
+      const response = await axios.post("http://localhost:3002/orders", orderData);
+      console.log("Order saved successfully:", response.data);
+      navigate("/payment-success", { state: { orderData, productName: product.name } });
     } catch (error) {
-        console.error('Error saving order details:', error);
+      console.error("Error saving order details:", error);
     }
-};
+  };
 
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
@@ -120,7 +102,7 @@ const PaymentForm = () => {
           <h4 className="font-bold">Order Summary</h4>
           <div className="flex justify-between p-2">
             <p>Product name:</p>
-            <p>{product.name}</p>
+            <p>{product?.name}</p>
           </div>
 
           <div className="flex justify-between p-2">
