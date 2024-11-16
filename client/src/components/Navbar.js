@@ -25,6 +25,9 @@ function Navbar() {
             <li className="text-white hover:text-y500 active:text-y500 lr16">
               <Link to="/contact">Contact us</Link>
             </li>
+            <li className="text-white hover:text-y500 active:text-y500 lr16">
+              <Link to="/cart">Visual us</Link>
+            </li>
           </ul>
         </div>
       </div>

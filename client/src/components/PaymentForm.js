@@ -1,71 +1,85 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useUser }  from "../pages/UserContext";
-
 
 const PaymentForm = () => {
   const location = useLocation();
   const { product, quantity: initialQuantity } = location.state || {};
-  const { currentUser } = useUser();
-
-  console.log('Current User:', currentUser);  // Check the structure
-  const userId = currentUser?.id || null;  // Safely access the ID
-  
-  if (!userId) {
-    console.warn('User ID not found.');
-  } else {
-    console.log('User ID:', userId);
-  }
-  
   const [quantity, setQuantity] = useState(initialQuantity || 1);
   const productPrice = Number(product?.price) || 0;
   const totalPrice = quantity * productPrice;
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const navigate = useNavigate();
 
-  const [address, setAddress] = useState({
-    area: "",
-    city: "",
-    state: "",
-    country: "",
-    zipcode: ""
-  });
+  // Form fields state
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [upi, setUpi] = useState("");
+
+  // Validation state
+  const [errors, setErrors] = useState({});
+
+  // Validation function
+  const validate = () => {
+    let validationErrors = {};
+
+    if (!name) validationErrors.name = "Name is required.";
+    if (!phone) validationErrors.phone = "Phone is required.";
+    else if (!/^\d{10}$/.test(phone))
+      validationErrors.phone = "Phone number must be 10 digits.";
+
+    if (!email) validationErrors.email = "Email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(email))
+      validationErrors.email = "Please enter a valid email address.";
+
+    if (!address) validationErrors.address = "Address is required.";
+
+    if (paymentMethod === "UPI" && !upi)
+      validationErrors.upi = "UPI ID is required for UPI payments.";
+
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
+  };
 
   const handleIncrement = () => setQuantity(quantity + 1);
   const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
 
   if (!product) return <p>Loading payment details...</p>;
 
-  const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  const trackingID = `TRACK-${Math.random()
+    .toString(36)
+    .substr(2, 9)
+    .toUpperCase()}`;
+
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 7);
-  const formattedDeliveryDate = deliveryDate.toISOString().split('T')[0];
+  const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0];
 
   const orderData = {
-    user_id: currentUser ? currentUser.id : null, // Add user ID here
     product_id: product.id,
     quantity,
+    product_name: product.name,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
     delivery_date: formattedDeliveryDate,
-    address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-    order_date: new Date().toISOString().split('T')[0]
-  };
-
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleProceed = async () => {
+    if (!validate()) return; // Don't proceed if validation fails
+
     try {
-      const response = await axios.post('http://localhost:3002/orders', orderData);
-      console.log('Order saved successfully:', response.data);
-      navigate('/payment-success', { state: { orderData } });
+      const response = await axios.post(
+        "http://localhost:3002/orders",
+        orderData
+      );
+      console.log("Order saved successfully:", response.data);
+
+      navigate("/payment-success", { state: { orderData } });
     } catch (error) {
-      console.error('Error saving order details:', error);
+      console.error("Error saving order details:", error);
     }
   };
 
@@ -73,24 +87,79 @@ const PaymentForm = () => {
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
       <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
         <h2 className="text-2xl font-bold mb-6">Payment</h2>
-        <form onSubmit={(e) => { e.preventDefault(); handleProceed(); }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleProceed();
+          }}
+        >
           <div className="grid grid-cols-2 gap-6">
-            <input type="text" placeholder="Name" className="border p-2 rounded" />
-            <input type="text" placeholder="Phone" className="border p-2 rounded" />
-            <input type="email" placeholder="Email" className="border p-2 rounded" />
-            <input type="text" placeholder="Area" name="area" value={address.area} onChange={handleAddressChange} className="border p-2 rounded" />
-            <input type="text" placeholder="City" name="city" value={address.city} onChange={handleAddressChange} className="border p-2 rounded" />
-            <input type="text" placeholder="State" name="state" value={address.state} onChange={handleAddressChange} className="border p-2 rounded" />
-            <input type="text" placeholder="Country" name="country" value={address.country} onChange={handleAddressChange} className="border p-2 rounded" />
-            <input type="text" placeholder="Zip Code" name="zipcode" value={address.zipcode} onChange={handleAddressChange} className="border p-2 rounded" />
+            <div>
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.name && <p className="text-red-500">{errors.name}</p>}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.phone && <p className="text-red-500">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.email && <p className="text-red-500">{errors.email}</p>}
+            </div>
+
+            <div className="col-span-2">
+              <input
+                type="text"
+                placeholder="Address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              {errors.address && (
+                <p className="text-red-500">{errors.address}</p>
+              )}
+            </div>
           </div>
 
           <div className="mt-4">
             {paymentMethod === "UPI" && (
-              <input type="text" placeholder="UPI" className="border p-2 rounded w-full" />
+              <div>
+                <input
+                  type="text"
+                  placeholder="UPI ID"
+                  value={upi}
+                  onChange={(e) => setUpi(e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+                {errors.upi && <p className="text-red-500">{errors.upi}</p>}
+              </div>
             )}
           </div>
-          <button type="submit" className="mt-4 w-full bg-m500 text-white p-2 rounded">
+
+          <button
+            type="submit"
+            className="mt-4 w-full bg-m500 text-white p-2 rounded"
+          >
             Proceed
           </button>
         </form>
@@ -117,9 +186,13 @@ const PaymentForm = () => {
           <div className="flex justify-between p-2 items-center">
             <p>Quantity:</p>
             <div className="flex items-center">
-              <button onClick={handleDecrement} className="px-2">-</button>
+              <button onClick={handleDecrement} className="px-2">
+                -
+              </button>
               <p className="mx-2">{quantity}</p>
-              <button onClick={handleIncrement} className="px-2">+</button>
+              <button onClick={handleIncrement} className="px-2">
+                +
+              </button>
             </div>
           </div>
 
@@ -150,10 +223,25 @@ const PaymentForm = () => {
 
         <div className="mt-4">
           <label className="flex items-center">
-            <input type="radio" name="payment" value="Pay On Delivery" onChange={(e) => setPaymentMethod(e.target.value)} className="mr-2" /> Pay On Delivery
+            <input
+              type="radio"
+              name="payment"
+              value="Pay On Delivery"
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mr-2"
+            />
+            Pay On Delivery
           </label>
           <label className="flex items-center">
-            <input type="radio" name="payment" value="UPI" checked={paymentMethod === "UPI"} onChange={(e) => setPaymentMethod(e.target.value)} className="mr-2" /> UPI
+            <input
+              type="radio"
+              name="payment"
+              value="UPI"
+              checked={paymentMethod === "UPI"}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="mr-2"
+            />
+            UPI
           </label>
         </div>
       </div>

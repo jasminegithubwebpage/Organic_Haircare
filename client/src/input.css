@@ -145,6 +145,7 @@ div > span {
   font-weight: 400;
 }
 
+
 .card {
   border: 1px solid #ddd; /* Example border */
   border-radius: 8px; /* Rounded corners */
@@ -169,7 +170,7 @@ div > span {
   transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
-.whole {
+.whole{
   width: 100%;
   display: flex;
 }
@@ -205,3 +206,13 @@ div > span {
 .con {
   height: 600px;
 }
+
+.proImg{
+  height: 165px;
+  width: 130px;
+  border-radius: 6px;
+}
+
+/* .product-info{
+  width: 500px;
+} */
