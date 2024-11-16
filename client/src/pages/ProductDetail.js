@@ -3,39 +3,61 @@ import axios from "axios";
 import Ingredients from "./Ingredients";
 import Review from "./Review";
 import ReviewForm from "./ReviewForm";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useUser } from "../pages/UserContext";
 
 const ProductDetail = () => {
   const [product, setProduct] = useState({});
   const [ingredients, setIngredients] = useState([]);
-  const [quantity, setQuantity] = useState(1); // Track quantity in ProductDetail
+  const [quantity, setQuantity] = useState(1);
+  const [successMessage, setSuccessMessage] = useState("");
   const { id } = useParams();
-  const navigate = useNavigate(); // useNavigate for routing
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useUser();
 
   useEffect(() => {
-    // Fetch product details
-    axios.get(`http://localhost:3002/products/${id}`).then((response) => {
-      setProduct(response.data);
-    });
+    const initialProduct = location.state?.product;
+    if (initialProduct) {
+      setProduct(initialProduct);
+    } else {
+      // Fetch product data if not passed via navigate
+      axios.get(`http://localhost:3002/products/${id}`).then((response) => {
+        setProduct(response.data);
+      });
+    }
 
     // Fetch ingredients
+    axios.get(`http://localhost:3002/products/${id}/ingredients`).then((response) => {
+      setIngredients(response.data);
+    });
+  }, [id, location.state]);
+
+  const handleAddToCart = () => {
+    const cartData = {
+      product_id: id,
+      product_name: product.name,
+      quantity,
+      price: product.price,
+      user_id: user?.id,
+    };
     axios
-      .get(`http://localhost:3002/products/${id}/ingredients`)
-      .then((response) => {
-        setIngredients(response.data);
-      });
-  }, [id]);
+      .post("http://localhost:3002/cart", cartData)
+      .then(() => {
+        setSuccessMessage(`${product.name} added to cart successfully!`);
+        setTimeout(() => setSuccessMessage(""), 3000);
+      })
+      .catch((error) => console.error("Error adding to cart:", error));
+  };
 
   const handleBuyNow = async () => {
     try {
-      // Check if the user is authenticated
       const response = await axios.get("http://localhost:3002/api/auth/check");
-      
       if (response.data.isAuthenticated) {
         // User is authenticated, proceed to payment
         navigate("/payment", { state: { product, quantity, id } });
       } else {
-        // User is not authenticated, redirect to login page
+        // Redirect to login
         navigate("/login");
       }
     } catch (error) {
@@ -43,9 +65,7 @@ const ProductDetail = () => {
       navigate("/login");
     }
   };
-  
 
-  // Add the conditional rendering here to wait for the product details
   if (!product.name) {
     return <p>Loading product details...</p>;
   }
@@ -53,25 +73,16 @@ const ProductDetail = () => {
   return (
     <div className="p-40 pt-20 items-center border border-orange-600">
       <div className="grid grid-cols-2 gap-8">
-        {/* Left: Product Image */}
-        <img
-          src={product.image_url}
-          alt={product.name}
-          className="rounded-2xl w-full h-full"
-        />
+        <img src={product.image_url} alt={product.name} className="rounded-2xl w-full h-full" />
 
-        {/* Right: Product Details */}
         <div>
           <h1 className="text-3xl font-bold">{product.name}</h1>
           <p className="my-4">{product.info}</p>
-          <p>Delivery date</p>
-          <p>Stock remaining</p>
           <div className="text-xl font-semibold">₹ {product.price}</div>
 
-          {/* Quantity Selector */}
           <div className="flex items-center gap-4 mt-4">
             <button
-              onClick={() => setQuantity(quantity - 1)}
+              onClick={() => setQuantity(Math.max(quantity - 1, 1))}
               disabled={quantity <= 1}
             >
               -
@@ -81,25 +92,31 @@ const ProductDetail = () => {
           </div>
 
           <div className="flex flex-row gap-6 p-5">
-            {/* Navigate to Payment page */}
+            <button
+              onClick={handleAddToCart}
+              className="bg-m500 text-white p-5 w-40 h-16 rounded-2xl"
+            >
+              Add to Cart
+            </button>
             <button
               onClick={handleBuyNow}
-              className="bg-b500 flex items-center justify-center text-white p-5 w-40 h-16 rounded-2xl lr20"
+              className="bg-b500 text-white p-5 w-40 h-16 rounded-2xl"
             >
               Buy Now
             </button>
           </div>
+
+          {successMessage && (
+            <p className="text-green-600 mt-4">{successMessage}</p>
+          )}
         </div>
 
-        {/* Ingredients */}
         <Ingredients ingredients={ingredients} />
       </div>
 
       <div className="flex flex-row">
-        {/* Reviews */}
-        <Review productId={id} /> {/* Send product ID to Review component */}
-        {/* Review Form */}
-        <ReviewForm product_id={id} /> {/* Pass product_id to ReviewForm */}
+        <Review productId={id} />
+        <ReviewForm product_id={id} />
       </div>
     </div>
   );

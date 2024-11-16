@@ -5,20 +5,19 @@ import jsPDF from "jspdf";
 function PaymentSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { orderData: orderDetails } = location.state || {};
+  const { productName, orderData } = location.state || {}; // Correct destructuring
 
-  if (!orderDetails) {
-    return <p>No order details available.</p>;
+  if (!orderData) {
+    return <p>No order details available.</p>; // Fallback if no order details
   }
 
   const {
-    product_name: productName,
     quantity,
     total_price: totalPrice,
     payment_method: paymentMethod,
     tracking_id: trackingID,
     delivery_date: deliveryDate,
-  } = orderDetails;
+  } = orderData;
 
   const generateInvoice = () => {
     const doc = new jsPDF();
@@ -27,7 +26,7 @@ function PaymentSuccess() {
     doc.text("Invoice", 10, 10);
 
     doc.setFontSize(12);
-    doc.text(`Product Name: ${productName}`, 10, 20);
+    doc.text(`Product Name: ${productName || "N/A"}`, 10, 20);
     doc.text(`Quantity: ${quantity}`, 10, 30);
     doc.text(`Total Amount: ₹${totalPrice}`, 10, 40);
     doc.text(`Payment Method: ${paymentMethod}`, 10, 50);

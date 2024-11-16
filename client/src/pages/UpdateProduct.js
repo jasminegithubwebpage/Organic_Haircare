@@ -19,6 +19,7 @@ const UpdateProduct = () => {
       });
 
       setMessage(`Product ID ${productId} updated successfully!`);
+      console.log(response);
     } catch (error) {
       console.error('Error updating product:', error);
       setMessage('Error updating product. Please try again.');

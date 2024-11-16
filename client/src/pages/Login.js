@@ -3,10 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext"; // Import the useUser hook
 
 function Login() {
-  const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
+  const { setUser } = useUser() || {}; // Add fallback to avoid undefined access
+  if (!setUser) {
+    console.error("setUser is not available. Ensure UserProvider is wrapped properly.");
+  }
+  const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
+  const [isUser, setIsUser] = useState(false); // Set false for non-user roles
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
   const [isSignUpComplete, setIsSignUpComplete] = useState(false); // Track sign-up success
   const navigate = useNavigate();
+
+  const handleSwitch = (role) => {
+    setIsSignUpComplete(false); // Reset sign-up success state
+    setIsSignUp(false); // Reset sign-up mode when switching roles
+    if (role === "superadmin") {
+      setIsSuperAdmin(true);
+      setIsUser(false);
+    } else if (role === "admin") {
+      setIsSuperAdmin(false);
+      setIsUser(false);
+    } else if (role === "user") {
+      setIsSuperAdmin(false);
+      setIsUser(true);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,8 +38,8 @@ function Login() {
 
     if (isSignUp) {
       requestBody.email = e.target.email?.value; // Use optional chaining to avoid errors
-      requestBody.confirmPassword = e.target['confirmPassword'].value;
-      requestBody.gender = e.target['gender'].value;
+      requestBody.confirmPassword = e.target["confirmPassword"].value;
+      requestBody.gender = e.target["gender"].value;
     }
 
     const endpoint = isSignUp ? "signup" : "login";
@@ -35,8 +55,8 @@ function Login() {
         setIsSignUpComplete(true);
         setIsSignUp(false);
       } else {
-        setCurrentUser(data); // Store the entire user object
-        console.log('Current User after Login:', data);
+        console.log("Current User after Login:", data.user); // Log the user data
+        setUser(data.user); // Set user data in context
         navigate(data.redirectUrl); // Navigate based on role
       }
     } else {
@@ -105,7 +125,7 @@ function Login() {
                   />
                 </div>
               )}
-              
+
               <div>
                 <label
                   htmlFor="password"
@@ -123,40 +143,42 @@ function Login() {
                 />
               </div>
               {isSignUp && (
-  <div>
-    <label className="block text-sm font-medium text-gray-700">Gender</label>
-    <div className="flex items-center space-x-4 mt-1">
-      <label className="flex items-center">
-        <input
-          type="radio"
-          name="gender"
-          value="Male"
-          required
-          className="mr-2"
-        />
-        Male
-      </label>
-      <label className="flex items-center">
-        <input
-          type="radio"
-          name="gender"
-          value="Female"
-          className="mr-2"
-        />
-        Female
-      </label>
-      <label className="flex items-center">
-        <input
-          type="radio"
-          name="gender"
-          value="Other"
-          className="mr-2"
-        />
-        Other
-      </label>
-    </div>
-  </div>
-)}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Gender
+                  </label>
+                  <div className="flex items-center space-x-4 mt-1">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        required
+                        className="mr-2"
+                      />
+                      Male
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        className="mr-2"
+                      />
+                      Female
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Other"
+                        className="mr-2"
+                      />
+                      Other
+                    </label>
+                  </div>
+                </div>
+              )}
               {isSignUp && (
                 <div>
                   <label
@@ -175,7 +197,6 @@ function Login() {
                   />
                 </div>
               )}
-              
 
               <div>
                 <button

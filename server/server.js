@@ -1,15 +1,3 @@
-// const express = require("express");
-// const { Pool } = require("pg");
-// const cors = require("cors");
-// require("dotenv").config();
-// const multer = require("multer");
-// const app = express();
-// const port = 3002;
-// const path = require("path");
-// app.use(express.static("public"));
-// const bcrypt = require("bcrypt");
-// const fs = require("fs");
-
 import express from "express";
 import pkg from "pg";
 import cors from "cors";
@@ -19,34 +7,33 @@ import path from "path";
 import bcrypt from "bcrypt";
 import fs from "fs";
 import { fileURLToPath } from "url";
-
-
-
-
-import passport from "passport"
+import passport from "passport";
 import session from "express-session";
 import bodyParser from "body-parser";
 import { Strategy } from "passport-local";
-
 
 dotenv.config();
 
 const app = express();
 const port = 3002;
 
+// Middleware
+app.use(cors({ origin: "http://localhost:3000" })); // Adjust to match your frontend's URL
+app.use(express.json());
 app.use(express.static("public"));
-
-///CORS Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
-  cors({
-    origin: "http://localhost:3000", // Adjust the origin to match your frontend's URL
+  session({
+    secret: process.env.SESSION_SECRET || "default_secret",
+    resave: false,
+    saveUninitialized: false,
   })
 );
-app.use(cors());
-app.use(express.json());
-const { Pool } = pkg;
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Database connection configuration
+const { Pool } = pkg;
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -55,69 +42,74 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+// Directory path for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-//session
-app.get("/payment", (req, res) => {
-  // console.log(req.user);
-  if (req.isAuthenticated()) {
-    res.render("payment.js");
-  } else {
-    res.redirect("/login");
-  }
-}); 
-
+// Passport configuration
 passport.use(
   new Strategy(async function verify(username, password, cb) {
     try {
-      const result = await db.query("SELECT * FROM users WHERE email = $1 ", [
+      const result = await pool.query("SELECT * FROM users WHERE email = $1", [
         username,
       ]);
+
       if (result.rows.length > 0) {
         const user = result.rows[0];
         const storedHashedPassword = user.password;
+
         bcrypt.compare(password, storedHashedPassword, (err, valid) => {
           if (err) {
-            //Error with password check
             console.error("Error comparing passwords:", err);
             return cb(err);
+          }
+
+          if (valid) {
+            return cb(null, user);
           } else {
-            if (valid) {
-              //Passed password check
-              return cb(null, user);
-            } else {
-              //Did not pass password check
-              return cb(null, false);
-            }
+            return cb(null, false, { message: "Incorrect password" });
           }
         });
       } else {
-        return cb("User not found");
+        return cb(null, false, { message: "User not found" });
       }
     } catch (err) {
-      console.log(err);
+      console.error("Error during authentication:", err);
+      return cb(err);
     }
   })
 );
 
 passport.serializeUser((user, cb) => {
-  cb(null, user);
-});
-passport.deserializeUser((user, cb) => {
-  cb(null, user);
+  cb(null, user.id);
 });
 
+passport.deserializeUser(async (id, cb) => {
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (result.rows.length > 0) {
+      cb(null, result.rows[0]);
+    } else {
+      cb(new Error("User not found"));
+    }
+  } catch (err) {
+    cb(err);
+  }
+});
+
+// Payment route
+app.get("/payment", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.sendFile(path.join(__dirname, "public", "payment.js"));
+  } else {
+    res.redirect("/login");
+  }
+});
 
 // Endpoint to get products
 app.get("/products", async (req, res) => {
-  // console.log("jas");
   try {
     const result = await pool.query("SELECT * FROM products;");
-
-    // console.log(result.rows);
-
     res.json(result.rows);
   } catch (err) {
     console.error("Database error:", err);
@@ -127,38 +119,43 @@ app.get("/products", async (req, res) => {
   }
 });
 
+// Start server
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
+
 // Route to get trending products
 app.get("/trending-products", async (req, res) => {
-  const query = "SELECT * FROM products ORDER BY  added_date desc limit 4";
+  const query = "SELECT * FROM products ORDER BY added_date DESC LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching trending products:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to get best-selling products
 app.get("/best-selling-products", async (req, res) => {
-  const query = "SELECT * FROM products ORDER BY count  DESC LIMIT 4";
+  const query = "SELECT * FROM products ORDER BY count DESC LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching best-selling products:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Route to get today’s deals
 app.get("/today-deals", async (req, res) => {
-  const query = "SELECT * FROM products ORDER BY discount   LIMIT 4";
+  const query = "SELECT * FROM products ORDER BY discount DESC LIMIT 4";
   try {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching today’s deals:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -170,7 +167,7 @@ app.get("/top-sold-products", async (req, res) => {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching top-sold products:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -187,15 +184,14 @@ app.get("/products/:id", async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    const product = result.rows[0];
-    // console.log("Product fetched from DB:", product); // Add this for debugging
-    res.json(product);
+    res.json(result.rows[0]);
   } catch (error) {
-    console.error("Error fetching product:", error); // Log the error for easier debugging
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching product details:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+// Fetch ingredients by product ID
 app.get("/products/:id/ingredients", async (req, res) => {
   const productId = req.params.id;
   try {
@@ -204,84 +200,97 @@ app.get("/products/:id/ingredients", async (req, res) => {
       [productId]
     );
 
-    // Flatten the result to return individual ingredient objects
-    const ingredients = result.rows.flatMap((row) =>
-      row.ingredient.map((ingredient) => ({ name: ingredient }))
-    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Ingredients not found" });
+    }
 
-    //console.log(ingredients);
+    const ingredients = result.rows.map((row) => ({ name: row.ingredient }));
     res.json(ingredients);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching product ingredients:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Submit new review
 app.post("/reviews", async (req, res) => {
-  const { comment, user_name, product_id } = req.body; // Ensure product_id is passed
-  console.log(product_id);
+  const { comment, user_name, product_id } = req.body;
+
+  if (!comment || !user_name || !product_id) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
   try {
     await pool.query(
-      "INSERT INTO product_reviews (user_name, comment, id, likes, dislikes, rating) VALUES ($1, $2, $3, 0, 0, 5)", // Ensure product_id is correctly named
-      [user_name, comment, product_id] // Save product_id in the correct position
+      "INSERT INTO product_reviews (user_name, comment, id, likes, dislikes, rating) VALUES ($1, $2, $3, 0, 0, 5)",
+      [user_name, comment, product_id]
     );
 
-    res.status(201).send("Review added successfully");
+    res.status(201).json({ message: "Review added successfully" });
   } catch (error) {
     console.error("Error inserting review:", error);
-    res.status(500).send("Error adding review");
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-//fetch review
-// Fetch the reviews for a product
+
+// Fetch reviews for a product
 app.get("/products/:id/reviews", async (req, res) => {
   const productId = req.params.id;
   try {
     const result = await pool.query(
-      "SELECT * FROM product_reviews WHERE id = $1", // id refers to the product_id here
+      "SELECT * FROM product_reviews WHERE id = $1", // 'id' here refers to the product ID
       [productId]
     );
-    //console.log(result.rows);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Like a review
 app.post("/reviews/:reviewId/like", async (req, res) => {
-  await pool.query(
-    "UPDATE product_reviews SET likes = likes + 1 WHERE review_id = $1",
-    [req.params.reviewId]
-  );
-  res.send("Like updated");
+  const reviewId = req.params.reviewId;
+  try {
+    await pool.query(
+      "UPDATE product_reviews SET likes = likes + 1 WHERE review_id = $1",
+      [reviewId]
+    );
+    res.status(200).json({ message: "Like updated successfully" });
+  } catch (error) {
+    console.error("Error liking the review:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // Dislike a review
 app.post("/reviews/:reviewId/dislike", async (req, res) => {
-  await pool.query(
-    "UPDATE product_reviews SET dislikes = dislikes + 1 WHERE review_id = $1",
-    [req.params.reviewId]
-  );
-  res.send("Dislike updated");
-});
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
-// Endpoint to fetch products
-app.get("/dashboard/products", async (req, res) => {
+  const reviewId = req.params.reviewId;
   try {
-    const result = await pool.query("SELECT * FROM products"); // Adjust table name if necessary
-    res.json(result.rows);
+    await pool.query(
+      "UPDATE product_reviews SET dislikes = dislikes + 1 WHERE review_id = $1",
+      [reviewId]
+    );
+    res.status(200).json({ message: "Dislike updated successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Server Error");
+    console.error("Error disliking the review:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+// Fetch all products for dashboard
+app.get("/dashboard/products", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM products"); // Ensure table name matches schema
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Fetch inventory data
 app.get("/dashboard/inventory", async (req, res) => {
   try {
     const query = `
@@ -298,52 +307,102 @@ app.get("/dashboard/inventory", async (req, res) => {
       LEFT JOIN 
         product_sales ps ON p.id = ps.product_id;
     `;
-
     const result = await pool.query(query);
     res.json(result.rows);
-    //console.log(result.rows);
   } catch (error) {
-    console.error("Error fetching inventory data:", error); // Log error details
-    res.status(500).send("Server Error");
+    console.error("Error fetching inventory data:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-app.post("/login", async (req, res) => {
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: './public/assets/', // Save files to the public/assets directory
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)); // Add timestamp to filename
+  }
+});
+
+// Initialize upload variable
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 1000000 } // Limit file size to 1MB
+}).single('image_url');
+
+// Endpoint to add products
+app.post('/AddProducts', (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: 'File upload error' });
+    }
+
+    const { name, info, price, count, discount, added_date } = req.body;
+    const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
+
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Product name is required' });
+    }
+
+    try {
+      const query = `
+        INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *;
+      `;
+      const values = [name, info, price, imageUrl, count, discount, added_date];
+      const result = await pool.query(query, values);
+      res.status(201).json({ success: true, product: result.rows[0] });
+    } catch (error) {
+      console.error('Error adding product:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });
+});
+
+// Login endpoint
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
     // Query to fetch user from the database
-    const query = "SELECT * FROM users WHERE username = $1 AND password = $2";
-    const values = [username, password];
+    const query = "SELECT * FROM users WHERE username = $1";
+    const values = [username];
     const result = await pool.query(query, values);
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
-      // Check the role and send the corresponding redirect URL
-      if (user.role === "superadmin") {
-        res.json({
-          message: "Login successful",
-          role: "superadmin",
-          redirectUrl: "/superadmin-dashboard",
-        });
-      } else if (user.role === "admin") {
-        res.json({
-          message: "Login successful",
-          role: "admin",
-          redirectUrl: "/dashboard",
-        });
-      } else if (user.role === "user") {
-        res.json({
-          message: "Login successful",
-          role: "user",
-          redirectUrl: "/products",
-        });
+      if (passwordMatch) {
+        // Prepare response with role-based redirect URLs
+        const responseData = {
+          message: 'Login successful',
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+          },
+          redirectUrl:
+            user.role === 'superadmin'
+              ? '/superadmin-dashboard'
+              : user.role === 'admin'
+              ? '/dashboard'
+              : '/products',
+        };
+
+        res.json(responseData);
       } else {
-        res.status(401).json({ message: "Invalid role or unauthorized user" });
+        res.status(401).json({ message: 'Invalid username or password' });
       }
     } else {
-      res.status(401).json({ message: "Invalid username or password" });
+      res.status(401).json({ message: 'Invalid username or password' });
     }
   } catch (error) {
     console.error("Error querying database:", error);
@@ -354,39 +413,42 @@ app.post("/login", async (req, res) => {
 // Delete product by ID
 app.delete("/DeleteProduct/:id", async (req, res) => {
   const productId = req.params.id;
-  console.log("ID IS DELETED ROUTE");
+  console.log("Product ID to delete:", productId);
   try {
-    // Query to delete the product by ID
+    // Delete from `products` table
     const result = await pool.query(
       "DELETE FROM products WHERE id = $1 RETURNING *",
       [productId]
     );
+
+    // Delete related entries from `product_ingredients` table
     const result2 = await pool.query(
-      "DELETE FROM  product_ingredients WHERE id = $1 RETURNING *",
+      "DELETE FROM product_ingredients WHERE id = $1 RETURNING *",
       [productId]
     );
-    if (result.rowCount === 0 && result2.count === 0) {
+
+    if (result.rowCount === 0 && result2.rowCount === 0) {
       return res.status(404).json({ message: "Product not found." });
     }
 
     res.status(200).json({ message: "Product deleted successfully." });
   } catch (error) {
     console.error("Error deleting product:", error);
-    res
-      .status(500)
-      .json({ message: "Server error, could not delete product." });
+    res.status(500).json({ message: "Server error, could not delete product." });
   }
 });
 
+// User signup
 app.post("/signup", async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
-  console.log("Received:", req.body);
+  console.log("Signup request received:", req.body);
 
   if (password.trim() !== confirmPassword.trim()) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
   try {
+    // Check if the user already exists
     const userCheck = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
@@ -394,20 +456,23 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Insert new user
     const newUser = await pool.query(
       "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *",
       [username, email, password]
     );
 
+    console.log("User created:", newUser.rows[0]);
     res
       .status(201)
       .json({ message: "User created successfully", user: newUser.rows[0] });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error creating user:", error);
     res.status(500).json({ message: "Server error", error });
   }
 });
 
+// Fetch user by ID
 app.get("/user/:id", async (req, res) => {
   const userId = req.params.id;
   try {
@@ -415,18 +480,22 @@ app.get("/user/:id", async (req, res) => {
       "SELECT username, email, address FROM users WHERE id = $1",
       [userId]
     );
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
     }
+
     res.json(result.rows[0]);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Server error" });
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
+// Reset password
 app.post("/reset-password", async (req, res) => {
   const { username, newPassword } = req.body;
+  console.log("Password reset request for username:", username);
 
   try {
     const result = await pool.query(
@@ -441,27 +510,34 @@ app.post("/reset-password", async (req, res) => {
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.error("Error updating password:", error);
-    res
-      .status(500)
-      .json({ message: "Server error, could not update password" });
+    res.status(500).json({ message: "Server error, could not update password" });
   }
 });
 
+// Place an Order
 app.post("/orders", async (req, res) => {
   const {
+    user_id, // Add user_id if required for tracking orders by user
     product_id,
     quantity,
     total_price,
     payment_method,
     tracking_id,
     delivery_date,
+    address, // Optional: Include if delivery requires an address
+    order_date, // Optional: Include if the order date needs to be recorded
   } = req.body;
+
+  // Validate required fields
+  if (!product_id || !quantity || !total_price || !payment_method) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
 
   try {
     // Start a transaction
     await pool.query("BEGIN");
 
-    // Check current count
+    // Check product stock
     const countQuery = "SELECT count FROM products WHERE id = $1";
     const countResult = await pool.query(countQuery, [product_id]);
 
@@ -471,62 +547,61 @@ app.post("/orders", async (req, res) => {
 
     const currentCount = countResult.rows[0].count;
 
-    // Ensure there's enough count
+    // Validate stock availability
     if (currentCount < quantity) {
-      return res
-        .status(400)
-        .json({ message: "Insufficient stock for this order" });
+      return res.status(400).json({ message: "Insufficient stock for this order" });
     }
 
-    // Decrement the count
+    // Update product stock
     const newCount = currentCount - quantity;
     const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
     await pool.query(updateCountQuery, [newCount, product_id]);
 
     // Insert the order
-    const query = `
-      INSERT INTO orders (product_id, quantity, total_price, payment_method, tracking_id, delivery_date)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;`;
-
-    const values = [
+    const orderQuery = `
+      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `;
+    const orderValues = [
+      user_id,
       product_id,
       quantity,
       total_price,
       payment_method,
       tracking_id,
       delivery_date,
+      address,
+      order_date,
     ];
-
-    const result = await pool.query(query, values);
+    const orderResult = await pool.query(orderQuery, orderValues);
 
     // Commit the transaction
     await pool.query("COMMIT");
 
-    // Check if new count is below threshold
+    // Low-stock alert
     if (newCount < 5) {
-      // Notify the admin in some way (could be through a message system, etc.)
-      console.log(
-        `Alert: Count for product ID ${product_id} is below threshold!`
-      );
+      console.log(`Alert: Product ID ${product_id} stock is below threshold!`);
     }
 
-    res.status(201).json(result.rows[0]); // Respond with the newly created order
+    // Return the created order
+    res.status(201).json(orderResult.rows[0]);
   } catch (error) {
-    // Rollback the transaction in case of an error
+    // Rollback the transaction on error
     await pool.query("ROLLBACK");
-    console.error("Error saving order:", error);
+    console.error("Error processing order:", error);
     res.status(500).json({ message: "Error saving order details" });
   }
 });
-// Assuming you have already set up your pool for PostgreSQL
+
+// Fetch low-stock products
 app.get("/api/low-stock", async (req, res) => {
   try {
     const query = "SELECT id, count AS stock FROM products WHERE count < $1";
-    const values = [5]; // Set your low stock threshold here
-    const result = await pool.query(query, values);
+    const threshold = 5; // Define your low stock threshold
+    const result = await pool.query(query, [threshold]);
 
-    // Return the list of low stock products
+    // Return the list of low-stock products
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching low stock products:", error);
@@ -534,53 +609,56 @@ app.get("/api/low-stock", async (req, res) => {
   }
 });
 
-// Get Orders
+// Fetch aggregated orders
 app.get("/api/orders", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT products.name AS product_name, 
-             SUM(orders.total_price) AS total_price, 
-             SUM(orders.quantity) AS quantity,
-             orders.payment_method AS payment_method
+      SELECT 
+        products.name AS product_name, 
+        SUM(orders.total_price) AS total_price, 
+        SUM(orders.quantity) AS total_quantity,
+        orders.payment_method
       FROM orders
       JOIN products ON orders.product_id = products.id
       GROUP BY products.name, orders.payment_method
-      ORDER BY product_name ASC
+      ORDER BY product_name ASC;
     `);
+
+    // Return aggregated order data
     res.json(result.rows);
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Error fetching aggregated orders:", error);
     res.status(500).send("Error fetching aggregated orders");
   }
 });
 
-
-// Get Users
+// Get all users
 app.get("/api/users", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM users");
-    res.json(result.rows);
+    res.status(200).json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching users:", err);
     res.status(500).send("Error fetching users");
   }
 });
 
+// Update product (count or discount)
 app.patch("/api/products/:id", async (req, res) => {
   const { id } = req.params;
   const { count, discount } = req.body;
 
   try {
-    // Initialize parts of the query and an array for values
+    // Initialize query and values
     let query = "UPDATE products SET ";
     const updates = [];
     const values = [];
 
+    // Dynamically build the query
     if (count !== undefined) {
       updates.push(`count = $${updates.length + 1}`);
       values.push(count);
     }
-
     if (discount !== undefined) {
       updates.push(`discount = $${updates.length + 1}`);
       values.push(discount);
@@ -590,54 +668,82 @@ app.patch("/api/products/:id", async (req, res) => {
       return res.status(400).json({ message: "No fields provided to update" });
     }
 
-    // Finalize the query
-    query +=
-      updates.join(", ") + ` WHERE id = $${updates.length + 1} RETURNING count`;
+    // Finalize query
+    query += updates.join(", ") + ` WHERE id = $${updates.length + 1} RETURNING count, discount`;
     values.push(id);
 
-    // Execute the query
+    // Execute query
     const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Send back the updated count in the response
-    const updatedCount = result.rows[0].count;
     res.status(200).json({
       message: "Product updated successfully",
-      updatedCount,
+      updatedProduct: result.rows[0],
     });
-  } catch (error) {
-    console.error("Error updating product:", error);
+  } catch (err) {
+    console.error("Error updating product:", err);
     res.status(500).json({ message: "Error updating product" });
   }
 });
 
-// Assuming you have a customers table and orders table
-// Assuming you have a customers table and orders table
+// Get all customers (excluding admin roles)
 app.get("/api/customers", async (req, res) => {
   try {
     const query = `
       SELECT 
-    id, 
-    username, 
-    email 
-FROM users
-WHERE role != 'superadmin' AND role != 'admin'
-ORDER BY username;
-
+        id, 
+        username, 
+        email 
+      FROM users
+      WHERE role NOT IN ('superadmin', 'admin')
+      ORDER BY username;
     `;
-
     const result = await pool.query(query);
     res.status(200).json(result.rows);
-  } catch (error) {
-    console.error("Error fetching customer data:", error);
+  } catch (err) {
+    console.error("Error fetching customer data:", err);
     res.status(500).json({ message: "Error fetching customer data" });
   }
 });
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const pool = require("./db"); // Assuming you have configured your database pool
 
-// Add User Route
+const app = express();
+app.use(express.json());
+
+// Serve static files from the "public" folder
+app.use(express.static("public"));
+
+// Ensure "public/assets" folder exists
+const assetFolder = path.join(__dirname, "public/assets");
+if (!fs.existsSync(assetFolder)) {
+  fs.mkdirSync(assetFolder, { recursive: true });
+  console.log("Created 'public/assets' folder.");
+} else {
+  console.log("'public/assets' folder already exists.");
+}
+
+// Configure multer storage for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, assetFolder); // Save to "public/assets" folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Save file with original name
+  },
+});
+
+const upload = multer({ storage }).single("image_url");
+
+// Endpoints
+
+// Add a User
 app.post("/api/user", async (req, res) => {
   const { username, email, password, role } = req.body;
 
@@ -660,112 +766,84 @@ app.post("/api/user", async (req, res) => {
   }
 });
 
-
-// data visualization
-
-// Route to get all admin users
-app.get('/api/admin-users', async (req, res) => {
+// Add a Product to the Cart
+app.post("/cart", async (req, res) => {
+  const { product_id, product_name, quantity, price, user_id } = req.body;
   try {
-    const result = await pool.query('SELECT * FROM admin_users');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Route to get all users
-app.get('/api/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server Error');
-  }
-});
-
-// Orders
-app.get('/api/orders', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM orders');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database query failed' });
-  }
-});
-
-// product sales route
-app.get('/api/product-sales', async (req, res) => {
-  try {
-    console.log("Fetching joined product sales data...");
-    const query = `
-      SELECT ps.sale_id, ps.product_id, p.name AS product_name, ps.quantity_sold, ps.sale_date, 
-             ps.total_sale_value, ps.monthly_sale, ps.total_sale
-      FROM product_sales ps
-      JOIN products p ON ps.product_id = p.id;
-    `;
-    const { rows: sales } = await pool.query(query);
-    console.log("Joined Sales data:", sales); // Check if data is returned
-    res.json(sales);
+    await pool.query(
+      "INSERT INTO cart (product_id, product_name, quantity, price, user_id) VALUES ($1, $2, $3, $4, $5)",
+      [product_id, product_name, quantity, price, user_id]
+    );
+    res.status(201).json({ message: "Product added to cart" });
   } catch (error) {
-    console.error("Error retrieving sales data:", error);
-    res.status(500).json({ error: "Failed to retrieve sales data" });
+    console.error("Error adding product to cart:", error);
+    res.status(500).json({ error: "Failed to add product to cart" });
   }
 });
 
-// Serve static files from the "public" folder
-app.use(express.static("public"));
-
-// Ensure "public/assets" folder exists
-const assetFolder = path.join(__dirname, "public/assets");
-if (!fs.existsSync(assetFolder)) {
-  fs.mkdirSync(assetFolder, { recursive: true });
-  console.log("Created 'public/assets' folder.");
-} else {
-  console.log("'public/assets' folder already exists.");
-}
-
-// Configure multer storage for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    console.log("Attempting to save file to:", assetFolder); // Absolute path for debug
-    cb(null, assetFolder); // Use absolute path to ensure correct directory
-  },
-  filename: (req, file, cb) => {
-    console.log("Saving with original filename:", file.originalname); // Log filename
-    cb(null, file.originalname); // Use original filename
-  },
+// Get Cart Items for a User
+app.get("/cart/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    const result = await pool.query(
+      `
+      SELECT c.cart_id, c.user_id, c.quantity, c.price, 
+             p.name, p.image_url
+      FROM cart c
+      JOIN products p ON c.product_id = p.id
+      WHERE c.user_id = $1
+      ORDER BY c.created_at DESC;
+    `,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    res.status(500).json({ message: "Failed to fetch cart" });
+  }
 });
 
-const upload = multer({ storage }).single("image_url");
+// Delete Product from Cart
+app.delete("/cart/:cartId", async (req, res) => {
+  const cartId = req.params.cartId;
+  try {
+    await pool.query("DELETE FROM cart WHERE cart_id = $1", [cartId]);
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting cart item:", error);
+    res.status(500).json({ message: "Failed to delete cart item" });
+  }
+});
 
-// Endpoint to add a new product
+// Update Cart Item Quantity
+app.put("/cart/:id", async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+  try {
+    await pool.query("UPDATE cart SET quantity = $1 WHERE cart_id = $2", [
+      quantity,
+      id,
+    ]);
+    res.json({ message: "Quantity updated" });
+  } catch (error) {
+    console.error("Error updating cart quantity:", error);
+    res.status(500).json({ message: "Failed to update quantity" });
+  }
+});
+
+// Add a Product with Image Upload
 app.post("/AddProducts", (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      console.error("Multer file upload error:", err); // Log any multer error
-      return res.status(400).json({
-        success: false,
-        message: "File upload error",
-      });
-    }
-
-    // Log file details to confirm multer processed the file
-    if (req.file) {
-      console.log("File uploaded successfully:", req.file);
-    } else {
-      console.log("No file uploaded.");
+      console.error("Multer file upload error:", err);
+      return res.status(400).json({ success: false, message: "File upload error" });
     }
 
     const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.originalname}` : ""; // Relative path for database
+    const imageUrl = req.file ? `/assets/${req.file.originalname}` : "";
 
     if (!name) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Product name is required" });
+      return res.status(400).json({ success: false, message: "Product name is required" });
     }
 
     try {
@@ -777,15 +855,16 @@ app.post("/AddProducts", (req, res) => {
       const values = [name, info, price, imageUrl, count, discount, added_date];
       const result = await pool.query(query, values);
 
-      console.log("Image URL saved in database:", imageUrl); // Log saved image URL
-
-      res.status(201).json({
-        success: true,
-        product: result.rows[0], // Return inserted product
-      });
+      res.status(201).json({ success: true, product: result.rows[0] });
     } catch (error) {
       console.error("Error adding product to database:", error);
       res.status(500).json({ success: false, message: "Server error" });
     }
   });
+});
+
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
