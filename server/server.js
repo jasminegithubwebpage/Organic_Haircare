@@ -685,3 +685,32 @@ app.put("/cart/:id", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.get('/filter-products', async (req, res) => {
+  const { search, hair_problem, price_range, ingredient } = req.query;
+
+  const query = `
+    SELECT p.*
+    FROM products p
+    LEFT JOIN product_ingredients pi ON p.id = pi.ids
+    WHERE 
+        ($1 IS NULL OR p.name ILIKE '%' || $1 || '%') AND
+        ($2 IS NULL OR p.hair_problem = $2) AND
+        (
+            $3 IS NULL OR
+            ($3 = '0-10' AND p.price < 10) OR
+            ($3 = '10-20' AND p.price BETWEEN 10 AND 20) OR
+            ($3 = '20-30' AND p.price BETWEEN 20 AND 30) OR
+            ($3 = '30+' AND p.price > 30)
+        ) AND
+        ($4 IS NULL OR pi.ingredient_name = $4)
+  `;
+
+  try {
+    const results = await db.query(query, [search || null, hair_problem || null, price_range || null, ingredient || null]);
+    res.json(results.rows);
+  } catch (error) {
+    console.error('Error filtering products:', error);
+    res.status(500).json({ error: 'An error occurred while filtering products.' });
+  }
+});
