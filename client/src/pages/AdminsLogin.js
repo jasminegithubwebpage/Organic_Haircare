@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext"; // Import the useUser hook
 
 function AdminsLogin() {
-  const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
+ // const { setCurrentUser } = useUser(); // Access setCurrentUser from UserContext
   const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
   const [isSignUpComplete, setIsSignUpComplete] = useState(false); // Track sign-up success
@@ -40,7 +40,7 @@ function AdminsLogin() {
         setIsSignUpComplete(true);
         setIsSignUp(false);
       } else {
-        setCurrentUser(requestBody.username);
+       // setCurrentUser(requestBody.username);
         navigate(data.redirectUrl);
       }
     } else {

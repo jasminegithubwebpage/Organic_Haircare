@@ -60,7 +60,7 @@ function App() {
           {/* <Route path="/add-user" element={<AdminLayout><AddUserForm /></AdminLayout>} /> */}
 
           {/* Super Admin Routes */}
-          <Route path="/superdashboard" element={<SALayout><SADashboard /></SALayout>} />
+          <Route path="/superadmin-dashboard" element={<SALayout><SADashboard /></SALayout>} />
           <Route path="sa/customer" element={<SALayout><SACustomer /></SALayout>} />
           <Route path="sa/inventory" element={<SALayout><SAInventory /></SALayout>} />
           <Route path="sa/update-product" element={<SALayout><UpdateProduct /></SALayout>} />

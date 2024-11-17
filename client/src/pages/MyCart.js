@@ -2,28 +2,44 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faShoppingCart } from "@fortawesome/free-solid-svg-icons"; // Import specific icons
 import { useUser } from "./UserContext";
 import toast from "react-hot-toast";
 
-const Cart = () => {
+const MyCart = () => {
   const [products, setProducts] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const { user } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProductsAndStock = async () => {
       try {
-        const response = await axios.get(`http://localhost:3002/cart/${user.id}`);
-        setProducts(response.data);
-        calculateTotal(response.data);
+        const cartResponse = await axios.get(`http://localhost:3002/cart/${user.id}`);
+        const cartProducts = cartResponse.data;
+
+        const lowStockResponse = await axios.get(`http://localhost:3002/api/low-stock`);
+        const lowStockData = lowStockResponse.data;
+
+        const updatedProducts = cartProducts.map((product) => {
+          const lowStockProduct = lowStockData.find((item) => item.id === product.product_id);
+          return {
+            ...product,
+            stock: lowStockProduct ? lowStockProduct.stock : product.quantity,
+          };
+        });
+
+        setProducts(updatedProducts);
+        setLowStockProducts(lowStockData.map((item) => item.id));
+        calculateTotal(updatedProducts);
       } catch (error) {
-        console.error("Error fetching cart details", error);
-        toast.error("Failed to load cart items");
+        console.error("Error fetching cart or stock details", error);
+        toast.error("Failed to load cart items or stock details");
       }
     };
 
-    fetchProducts();
+    fetchProductsAndStock();
   }, [user.id]);
 
   const calculateTotal = (products) => {
@@ -61,11 +77,7 @@ const Cart = () => {
 
   const handleIndividualBuyNow = (product) => {
     navigate("/payment", {
-      state: { 
-        product: product,
-        quantity: product.quantity,
-        id: product.cart_id,
-      },
+      state: { product, quantity: product.quantity, id: product.id },
     });
     toast.success("Proceeding to checkout for selected product");
   };
@@ -77,13 +89,8 @@ const Cart = () => {
       id: product.cart_id,
       price: product.price,
     }));
-    
-    navigate("/payment", {
-      state: { 
-        productData,
-        totalPrice
-      }
-    });
+
+    navigate("/payment", { state: { productData, totalPrice } });
     toast.success("Proceeding to checkout");
   };
 
@@ -95,37 +102,39 @@ const Cart = () => {
             <img src={product.image_url} alt={product.product_name} className="w-32 h-32 object-cover" />
             <div className="w-full">
               <div className="flex justify-between">
-                <h4>{product.product_name}</h4>
+                <h4>{product.name}</h4>
                 <h4>₹ {parseFloat(product.price).toFixed(2)}</h4>
               </div>
               <div className="flex justify-between py-2">
-                <p>In stock</p>
+                <p>{product.stock === 0 ? "Out of Stock" : "In Stock"}</p>
                 <div className="flex gap-8">
                   <p>₹ {parseFloat(product.price * product.quantity).toFixed(2)}</p>
                   <div className="flex items-center gap-4">
                     <label>Qty: </label>
-                    <input 
-                      type="number" 
-                      value={product.quantity} 
-                      min={1} 
-                      onChange={(e) => handleUpdateQuantity(product.cart_id, parseInt(e.target.value))} 
+                    <input
+                      type="number"
+                      value={product.quantity}
+                      min={1}
+                      onChange={(e) => handleUpdateQuantity(product.cart_id, parseInt(e.target.value))}
                       className="w-12 text-center"
+                      disabled={product.stock === 0}
                     />
                   </div>
                 </div>
               </div>
               <div className="flex py-1 gap-2">
                 <button
-                  className="text-red-500 flex items-center gap-2"
+                  className="text-red-500 flex items-center gap-2 bg-m500 text-white rounded-lg px-3 py-1"
                   onClick={() => handleDelete(product.cart_id)}
                 >
-                  <FontAwesomeIcon icon={["fas", "trash"]} /> Delete
+                  <FontAwesomeIcon icon={faTrash} /> Delete
                 </button>
                 <button
                   onClick={() => handleIndividualBuyNow(product)}
-                  className="text-blue-500 flex items-center gap-2"
+                  className="text-blue-500 flex items-center gap-2 bg-m500 text-white rounded-lg px-3 py-1"
+                  disabled={product.stock === 0}
                 >
-                  <FontAwesomeIcon icon={["fas", "shopping-cart"]} /> Buy Now
+                  <FontAwesomeIcon icon={faShoppingCart} /> Buy Now
                 </button>
               </div>
             </div>
@@ -135,7 +144,7 @@ const Cart = () => {
       <div className="w-1/2 bg-gray-100 p-4">
         <h3>Total Price: ₹ {parseFloat(totalPrice).toFixed(2)}</h3>
         <button
-          className="bg-blue-500 text-white p-4 rounded w-full mt-4"
+          className="bg-m500 text-white p-4 rounded w-full mt-4 rounded-lg"
           onClick={handleOverallBuyNow}
           disabled={products.length === 0 || totalPrice === 0}
         >
@@ -146,4 +155,4 @@ const Cart = () => {
   );
 };
 
-export default Cart;
+export default MyCart;

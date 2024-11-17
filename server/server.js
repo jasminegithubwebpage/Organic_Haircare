@@ -418,12 +418,12 @@ app.post("/signin", async (req, res) => {
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    // Optional: Generate JWT for authenticated sessions
-    const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      "your_secret_key", // Replace with an environment variable for security
-      { expiresIn: "1h" }
-    );
+    // // Optional: Generate JWT for authenticated sessions
+    // const token = jwt.sign(
+    //   { id: user.id, username: user.username, role: user.role },
+    //   "your_secret_key", // Replace with an environment variable for security
+    //   { expiresIn: "1h" }
+    // );
 
     console.log("User logged in:", user);
     res.status(200).json({
@@ -433,8 +433,7 @@ app.post("/signin", async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-      },
-      token, // Optional: Send the JWT to the client
+      } // Optional: Send the JWT to the client
     });
   } catch (error) {
     console.error("Error logging in:", error);
@@ -442,7 +441,6 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-// Login endpoint
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -454,7 +452,9 @@ app.post('/login', async (req, res) => {
 
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      // Assuming passwords are stored in plain text (not recommended; you should hash passwords)
+      const passwordMatch = user.password === password;
 
       if (passwordMatch) {
         // Prepare response with role-based redirect URLs
@@ -487,6 +487,7 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // Delete product by ID
 app.delete("/DeleteProduct/:id", async (req, res) => {
@@ -939,6 +940,32 @@ app.post("/AddProducts", (req, res) => {
       res.status(500).json({ success: false, message: "Server error" });
     }
   });
+});
+
+
+// Route to check if user is authenticated
+// Route to check if the user is authenticated
+app.get("/api/auth/check", async (req, res) => {
+  const { userId } = req.query; // Getting the userId from query parameters
+
+  if (!userId) {
+    return res.status(400).json({ isAuthenticated: false });
+  }
+
+  try {
+    // Query to check if user exists in the database
+    const result = await pool.query("SELECT id FROM users WHERE id = $1", [userId]);
+
+    // If a user is found, return isAuthenticated: true
+    if (result.rows.length > 0) {
+      return res.json({ isAuthenticated: true });
+    } else {
+      return res.json({ isAuthenticated: false });
+    }
+  } catch (error) {
+    console.error("Error checking user authentication:", error);
+    return res.status(500).json({ isAuthenticated: false });
+  }
 });
 
 // Start the server

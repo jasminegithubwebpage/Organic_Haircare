@@ -43,7 +43,7 @@ function Login() {
       } else {
         console.log("Current User after Login:", data.user);
         setUser(data.user); // Set user data in context
-        navigate("/user-dashboard"); // Navigate to user dashboard
+        navigate("/products"); // Navigate to user dashboard
       }
     } else {
       const errorData = await response.json();

@@ -49,15 +49,28 @@ const ProductDetail = () => {
       })
       .catch((error) => console.error("Error adding to cart:", error));
   };
-
+  const totalPrice = product.price * quantity;
   const handleBuyNow = async () => {
     try {
-      const response = await axios.get("http://localhost:3002/api/auth/check");
+      // Retrieve user ID from the current session (or UserContext)
+      const userId = user?.id; // Assuming `user` is stored in context or wherever your authentication info is available
+  
+      // If userId is not found, it means the user is not logged in
+      if (!userId) {
+        navigate("/login"); // Redirect to login if not authenticated
+        return;
+      }
+  
+      // Send the user ID to the backend for authentication check
+      const response = await axios.get("http://localhost:3002/api/auth/check", {
+        params: { userId }, // Send userId in query parameters
+      });
+  
       if (response.data.isAuthenticated) {
-        // User is authenticated, proceed to payment
-        navigate("/payment", { state: { product, quantity, id } });
+        // If the backend confirms the user is authenticated, proceed to payment
+        navigate("/payment", { state: { productData: [product], totalPrice } });
       } else {
-        // Redirect to login
+        // If the backend responds that the user is not authenticated, redirect to login
         navigate("/login");
       }
     } catch (error) {
@@ -65,7 +78,7 @@ const ProductDetail = () => {
       navigate("/login");
     }
   };
-
+  
   if (!product.name) {
     return <p>Loading product details...</p>;
   }
