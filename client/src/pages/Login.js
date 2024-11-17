@@ -1,48 +1,34 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "./UserContext"; // Import the useUser hook
+import { Link } from "react-router-dom";
 
 function Login() {
-  const { setUser } = useUser() || {}; // Add fallback to avoid undefined access
+  const { setUser } = useUser() || {};
   if (!setUser) {
-    console.error("setUser is not available. Ensure UserProvider is wrapped properly.");
+    console.error(
+      "setUser is not available. Ensure UserProvider is wrapped properly."
+    );
   }
-  const [isSuperAdmin, setIsSuperAdmin] = useState(true); // Default role
-  const [isUser, setIsUser] = useState(false); // Set false for non-user roles
+
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign-up and login
   const [isSignUpComplete, setIsSignUpComplete] = useState(false); // Track sign-up success
   const navigate = useNavigate();
-
-  const handleSwitch = (role) => {
-    setIsSignUpComplete(false); // Reset sign-up success state
-    setIsSignUp(false); // Reset sign-up mode when switching roles
-    if (role === "superadmin") {
-      setIsSuperAdmin(true);
-      setIsUser(false);
-    } else if (role === "admin") {
-      setIsSuperAdmin(false);
-      setIsUser(false);
-    } else if (role === "user") {
-      setIsSuperAdmin(false);
-      setIsUser(true);
-    }
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     const requestBody = {
       username: e.target.username.value,
       password: e.target.password.value,
-      role: "user", // Set role to user directly
     };
 
     if (isSignUp) {
-      requestBody.email = e.target.email?.value; // Use optional chaining to avoid errors
+      requestBody.email = e.target.email?.value;
       requestBody.confirmPassword = e.target["confirmPassword"].value;
       requestBody.gender = e.target["gender"].value;
     }
 
-    const endpoint = isSignUp ? "signup" : "login";
+    const endpoint = isSignUp ? "signup" : "signin";
     const response = await fetch(`http://localhost:3002/${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,9 +41,9 @@ function Login() {
         setIsSignUpComplete(true);
         setIsSignUp(false);
       } else {
-        console.log("Current User after Login:", data.user); // Log the user data
+        console.log("Current User after Login:", data.user);
         setUser(data.user); // Set user data in context
-        navigate(data.redirectUrl); // Navigate based on role
+        navigate("/user-dashboard"); // Navigate to user dashboard
       }
     } else {
       const errorData = await response.json();
@@ -88,7 +74,26 @@ function Login() {
               : "Welcome Back! Let's Get Started"}
           </p>
 
-          {!isSignUpComplete ? (
+          {isSignUpComplete ? (
+            <div className="text-center">
+              <p className="text-gray-600">
+                Sign-up complete! You can now{" "}
+                <Link
+                  to="#"
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent default link behavior
+                    setIsSignUp(false); // Switch to login form
+                    setIsSignUpComplete(false); // Reset sign-up complete flag
+                  }}
+                >
+                  <span className="text-burgundy cursor-pointer">
+                    Sign in here
+                  </span>
+                </Link>
+                .
+              </p>
+            </div>
+          ) : (
             <form className="space-y-6" onSubmit={handleLogin}>
               <div>
                 <label
@@ -229,19 +234,6 @@ function Login() {
                 </span>
               </p>
             </form>
-          ) : (
-            <div className="text-center">
-              <p className="text-gray-600">
-                Sign-up complete! You can now{" "}
-                <span
-                  className="text-burgundy cursor-pointer"
-                  onClick={() => setIsSignUp(false)}
-                >
-                  Sign in here
-                </span>
-                .
-              </p>
-            </div>
           )}
         </div>
       </div>

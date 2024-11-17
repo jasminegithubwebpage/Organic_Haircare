@@ -18,7 +18,6 @@ import UpdateProduct from "./pages/UpdateProduct";
 import About from "./pages/About";
 import Contactus from "./pages/Contactus";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import SuperAdminDashboard from "./pages/SuperAdminDashBoard";
 import MyCart from "./pages/MyCart";
 
 // Super Admin
@@ -27,8 +26,9 @@ import SALayout from "./components/SALayout";
 import SACustomer from "./pages/SACustomer";
 import SAInventory from "./pages/SAInventory";
 import SAProduct from "./pages/SAProduct";
-
 import AdminsLogin from "./pages/AdminsLogin";
+
+import AddUserForm from "./pages/AddUserForm"
 
 // Visual
 import Reports from "./pages/Reports";
@@ -57,10 +57,9 @@ function App() {
           <Route path="/dashboard/product" element={<AdminLayout><DashProduct /></AdminLayout>} />
           <Route path="/dashboard/messages" element={<AdminLayout><AdminMsg /></AdminLayout>} />
           <Route path="/add-product" element={<AdminLayout><AddProduct /></AdminLayout>} />
-          <Route path="/add-user" element={<AdminLayout><AddUserForm /></AdminLayout>} />
+          {/* <Route path="/add-user" element={<AdminLayout><AddUserForm /></AdminLayout>} /> */}
 
           {/* Super Admin Routes */}
-          <Route path="/superadmin-dashboard" element={<SuperAdminDashboard />} />
           <Route path="/superdashboard" element={<SALayout><SADashboard /></SALayout>} />
           <Route path="sa/customer" element={<SALayout><SACustomer /></SALayout>} />
           <Route path="sa/inventory" element={<SALayout><SAInventory /></SALayout>} />

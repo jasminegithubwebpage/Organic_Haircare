@@ -315,24 +315,56 @@ app.get("/dashboard/inventory", async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+// // Start the server
+// app.listen(port, () => {
+//   console.log(`Server is running on http://localhost:${port}`);
+// });
 
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
+// const multer = require('multer');
+// const path = require('path');
+
+// First Multer configuration for file uploads
+const storage1 = multer.diskStorage({
   destination: './public/assets/', // Save files to the public/assets directory
   filename: (req, file, cb) => {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)); // Add timestamp to filename
   }
 });
 
-// Initialize upload variable
-const upload = multer({
-  storage: storage,
+const upload1 = multer({
+  storage: storage1,
   limits: { fileSize: 1000000 } // Limit file size to 1MB
 }).single('image_url');
+
+// Second Multer configuration for file uploads
+const storage2 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const assetFolder = './public/assets'; // Define your asset folder
+    cb(null, assetFolder); // Save to "public/assets" folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Save file with original name
+  }
+});
+
+const upload2 = multer({ storage: storage2 }).single("image_url");
+
+
+// // Multer configuration for file uploads
+// const storage = multer.diskStorage({
+//   destination: './public/assets/', // Save files to the public/assets directory
+//   filename: (req, file, cb) => {
+//     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname)); // Add timestamp to filename
+//   }
+// });
+
+// // Initialize upload variable
+// const upload = multer({
+//   storage: storage,
+//   limits: { fileSize: 1000000 } // Limit file size to 1MB
+// }).single('image_url');
+
+
 
 // Endpoint to add products
 app.post('/AddProducts', (req, res) => {
@@ -362,6 +394,52 @@ app.post('/AddProducts', (req, res) => {
       res.status(500).json({ success: false, message: 'Server error' });
     }
   });
+});
+
+// user signin
+app.post("/signin", async (req, res) => {
+  const { username, password } = req.body;
+  console.log("Login request received:", req.body);
+
+  try {
+    // Check if the user exists
+    const userQuery = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    const user = userQuery.rows[0];
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If passwords are hashed, compare using bcrypt
+    const isPasswordValid = password === user.password; // For plaintext passwords
+    // const isPasswordValid = await bcrypt.compare(password, user.password); // For hashed passwords
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // Optional: Generate JWT for authenticated sessions
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      "your_secret_key", // Replace with an environment variable for security
+      { expiresIn: "1h" }
+    );
+
+    console.log("User logged in:", user);
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      token, // Optional: Send the JWT to the client
+    });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
 });
 
 // Login endpoint
@@ -708,13 +786,13 @@ app.get("/api/customers", async (req, res) => {
     res.status(500).json({ message: "Error fetching customer data" });
   }
 });
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const pool = require("./db"); // Assuming you have configured your database pool
+// const express = require("express");
+// const multer = require("multer");
+// const path = require("path");
+// const fs = require("fs");
+// const pool = require("./db"); // Assuming you have configured your database pool
 
-const app = express();
+// const app = express();
 app.use(express.json());
 
 // Serve static files from the "public" folder
@@ -729,17 +807,17 @@ if (!fs.existsSync(assetFolder)) {
   console.log("'public/assets' folder already exists.");
 }
 
-// Configure multer storage for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, assetFolder); // Save to "public/assets" folder
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname); // Save file with original name
-  },
-});
+// // Configure multer storage for file uploads
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, assetFolder); // Save to "public/assets" folder
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.originalname); // Save file with original name
+//   },
+// });
 
-const upload = multer({ storage }).single("image_url");
+// const storage = multer({ storage }).single("image_url");
 
 // Endpoints
 
