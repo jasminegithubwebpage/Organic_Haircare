@@ -18,7 +18,9 @@ const app = express();
 const port = 3002;
 
 // Middleware
-app.use(cors({ origin: "http://localhost:3000" })); // Adjust to match your frontend's URL
+//const cors = require('cors');
+app.use(cors({ origin: '*' })); // Allow all origins
+
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -394,35 +396,35 @@ const upload2 = multer({ storage: storage2 }).single("image_url");
 
 
 
-// Endpoint to add products
-app.post('/AddProducts', (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ success: false, message: 'File upload error' });
-    }
+// // Endpoint to add products
+// app.post('/AddProducts', (req, res) => {
+//   upload(req, res, async (err) => {
+//     if (err) {
+//       return res.status(400).json({ success: false, message: 'File upload error' });
+//     }
 
-    const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
+//     const { name, info, price, count, discount, added_date } = req.body;
+//     const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
 
-    if (!name) {
-      return res.status(400).json({ success: false, message: 'Product name is required' });
-    }
+//     if (!name) {
+//       return res.status(400).json({ success: false, message: 'Product name is required' });
+//     }
 
-    try {
-      const query = `
-        INSERT INTO products (name, info, price, image_url, count, discount, added_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *;
-      `;
-      const values = [name, info, price, imageUrl, count, discount, added_date];
-      const result = await pool.query(query, values);
-      res.status(201).json({ success: true, product: result.rows[0] });
-    } catch (error) {
-      console.error('Error adding product:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-});
+//     try {
+//       const query = `
+//         INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+//         VALUES ($1, $2, $3, $4, $5, $6, $7)
+//         RETURNING *;
+//       `;
+//       const values = [name, info, price, imageUrl, count, discount, added_date];
+//       const result = await pool.query(query, values);
+//       res.status(201).json({ success: true, product: result.rows[0] });
+//     } catch (error) {
+//       console.error('Error adding product:', error);
+//       res.status(500).json({ success: false, message: 'Server error' });
+//     }
+//   });
+// });
 
 // user signin
 app.post("/signin", async (req, res) => {
@@ -716,28 +718,31 @@ app.get("/api/low-stock", async (req, res) => {
   }
 });
 
-// Fetch aggregated orders
 app.get("/api/orders", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        products.name AS product_name, 
-        SUM(orders.total_price) AS total_price, 
-        SUM(orders.quantity) AS total_quantity,
-        orders.payment_method
+          orders.order_id,
+          orders.product_id, 
+          products.name AS product_name, 
+          orders.quantity,
+          orders.total_price, 
+          orders.payment_method,
+          orders.tracking_id,
+          orders.delivery_date,
+          orders.order_date
       FROM orders
       JOIN products ON orders.product_id = products.id
-      GROUP BY products.name, orders.payment_method
-      ORDER BY product_name ASC;
+      ORDER BY orders.order_date DESC;
     `);
 
-    // Return aggregated order data
     res.json(result.rows);
   } catch (error) {
-    console.error("Error fetching aggregated orders:", error);
-    res.status(500).send("Error fetching aggregated orders");
+    console.error("Error fetching orders:", error);
+    res.status(500).send("Error fetching orders");
   }
 });
+
 
 // Get all users
 app.get("/api/users", async (req, res) => {
@@ -940,6 +945,7 @@ app.put("/cart/:id", async (req, res) => {
 
 // Add a Product with Image Upload
 app.post("/AddProducts", (req, res) => {
+  console.log("backend add");
   upload(req, res, async (err) => {
     if (err) {
       console.error("Multer file upload error:", err);
@@ -961,7 +967,7 @@ app.post("/AddProducts", (req, res) => {
       `;
       const values = [name, info, price, imageUrl, count, discount, added_date];
       const result = await pool.query(query, values);
-
+      console.log("Values to be inserted:", values); 
       res.status(201).json({ success: true, product: result.rows[0] });
     } catch (error) {
       console.error("Error adding product to database:", error);
@@ -1049,8 +1055,8 @@ app.get('/api/product-sales', async (req, res) => {
   }
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// // Start the server
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
