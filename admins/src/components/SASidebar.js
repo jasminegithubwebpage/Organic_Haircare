@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 function SASidebar() {
   return (
-    <aside className="w-80 h-auto min-h-screen bg-m500 text-white flex flex-col">
+    <aside className="w-60 h-auto min-h-screen bg-m500 text-white flex flex-col">
       <div className="p-4 text-2xl items-center">
         <div className="flex">
           <span className="mr-2">👜</span>
@@ -10,7 +10,7 @@ function SASidebar() {
         </div>
         <div>
           <Link to="/sapage">
-            <p className="r12">Back to home</p>
+            <p className="r16"><span><i class="fa-solid fa-right-from-bracket"></i></span> Back to home</p>
           </Link>
         </div>
       </div>
