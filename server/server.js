@@ -497,7 +497,7 @@ app.post('/login', async (req, res) => {
           },
           redirectUrl:
             user.role === 'superadmin'
-              ? '/superadmin-dashboard'
+              ? '/sapage'
               : user.role === 'admin'
               ? '/dashboard'
               : '/products',
@@ -993,6 +993,59 @@ app.get("/api/auth/check", async (req, res) => {
   } catch (error) {
     console.error("Error checking user authentication:", error);
     return res.status(500).json({ isAuthenticated: false });
+  }
+});
+
+// data visualization
+// Route to get all admin users
+app.get('/api/admin-users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM admin_users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Route to get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// Orders
+app.get('/api/orders', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM orders');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+// product sales route
+app.get('/api/product-sales', async (req, res) => {
+  try {
+    console.log("Fetching joined product sales data...");
+    const query = `
+      SELECT ps.sale_id, ps.product_id, p.name AS product_name, ps.quantity_sold, ps.sale_date, 
+             ps.total_sale_value, ps.monthly_sale, ps.total_sale
+      FROM product_sales ps
+      JOIN products p ON ps.product_id = p.id;
+    `;
+    const { rows: sales } = await pool.query(query);
+    console.log("Joined Sales data:", sales); // Check if data is returned
+    res.json(sales);
+  } catch (error) {
+    console.error("Error retrieving sales data:", error);
+    res.status(500).json({ error: "Failed to retrieve sales data" });
   }
 });
 
