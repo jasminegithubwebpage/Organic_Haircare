@@ -6,44 +6,52 @@ const SADashboard = () => {
   const [customersCount, setCustomersCount] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [productsSold, setProductsSold] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchOrders = async (search = "") => {
+    try {
+      const ordersResponse = await axios.get("http://localhost:3002/api/orders", {
+        params: { search },
+      });
+      const usersResponse = await axios.get("http://localhost:3002/api/users");
+
+      const ordersData = ordersResponse.data;
+      const usersData = usersResponse.data;
+
+      // Set state with data from users table
+      setCustomersCount(usersData.length);
+
+      // Calculate total revenue and products sold
+      let totalRevenue = 0;
+      let totalProductsSold = 0;
+
+      ordersData.forEach((order) => {
+        totalRevenue += Number(order.total_price) || 0;
+        totalProductsSold += Number(order.quantity) || 0;
+      });
+
+      setTotalRevenue(totalRevenue);
+      setProductsSold(totalProductsSold);
+      setOrders(ordersData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    fetchOrders(value); // Fetch filtered data based on the search input
+  };
+
   const extractDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString();
   };
-  // Fetch orders and users data from backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const ordersResponse = await axios.get("http://localhost:3002/api/orders");
-        const usersResponse = await axios.get("http://localhost:3002/api/users");
 
-        const ordersData = ordersResponse.data;
-        const usersData = usersResponse.data;
-
-        // Set state with data from users table
-        setCustomersCount(usersData.length);
-
-        // Calculate total revenue and products sold
-        let totalRevenue = 0;
-        let totalProductsSold = 0;
-
-        ordersData.forEach((order) => {
-          totalRevenue += Number(order.total_price) || 0;
-          totalProductsSold += Number(order.quantity) || 0;
-        });
-        
-
-        setTotalRevenue(totalRevenue);
-        setProductsSold(totalProductsSold);
-        setOrders(ordersData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Determine the order status based on the delivery date
   const getOrderStatus = (deliveryDate) => {
     const today = new Date();
     return new Date(deliveryDate) < today ? "Completed" : "Pending";
@@ -75,8 +83,10 @@ const SADashboard = () => {
         <div className="flex space-x-2">
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search by Product Name"
             className="px-4 py-2 border rounded-md"
+            value={searchTerm}
+            onChange={handleSearchChange}
           />
           <select className="px-4 py-2 border rounded-md">
             <option>Week</option>
@@ -91,7 +101,6 @@ const SADashboard = () => {
             <th className="border-b px-4 py-2">Product</th>
             <th className="border-b px-4 py-2">Order Id</th>
             <th className="border-b px-4 py-2">Order Date</th>
-            {/* <th className="border-b px-4 py-2">Price</th> */}
             <th className="border-b px-4 py-2">Quantity</th>
             <th className="border-b px-4 py-2">Total Price</th>
             <th className="border-b px-4 py-2">Tracking Id</th>
@@ -101,18 +110,13 @@ const SADashboard = () => {
         <tbody>
           {orders.map((order, index) => (
             <tr key={index}>
-              <td className="border-b px-4 py-2">{order.product_id}</td>
+              <td className="border-b px-4 py-2">{order.product_name}</td>
               <td className="border-b px-4 py-2">{order.order_id}</td>
-              <td className="border-b px-4 py-2">
-               {extractDate(order.order_date)}
-              </td>
-             {/* <td className="border-b px-4 py-2">₹{order.price}</td> */}
+              <td className="border-b px-4 py-2">{extractDate(order.order_date)}</td>
               <td className="border-b px-4 py-2">{order.quantity}</td>
               <td className="border-b px-4 py-2">${order.total_price}</td>
               <td className="border-b px-4 py-2">{order.tracking_id}</td>
-              <td className="border-b px-4 py-2">
-                {getOrderStatus(order.deliveryDate)}
-              </td>
+              <td className="border-b px-4 py-2">{getOrderStatus(order.deliveryDate)}</td>
             </tr>
           ))}
         </tbody>

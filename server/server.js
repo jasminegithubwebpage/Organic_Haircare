@@ -310,7 +310,7 @@ app.post("/reviews/:reviewId/dislike", async (req, res) => {
 // Fetch all products for dashboard
 app.get("/dashboard/products", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM products"); // Ensure table name matches schema
+    const result = await pool.query("SELECT * FROM products order by name"); // Ensure table name matches schema
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -322,18 +322,22 @@ app.get("/dashboard/products", async (req, res) => {
 app.get("/dashboard/inventory", async (req, res) => {
   try {
     const query = `
-      SELECT 
-        p.id AS product_id,
-        ps.sale_id,
-        p.name AS product_name,
-        p.price,
-        p.count AS available_quantity,
-        COALESCE(ps.quantity_sold, 0) AS quantity_sold,
-        COALESCE(ps.total_sale_value, 0) AS total_sale_value
-      FROM 
-        products p
-      LEFT JOIN 
-        product_sales ps ON p.id = ps.product_id;
+    SELECT 
+  p.id AS product_id,
+  ps.sale_id,
+  p.name AS product_name,
+  p.price,
+  p.count AS available_quantity,
+  COALESCE(ps.quantity_sold, 0) AS quantity_sold,
+  COALESCE(ps.total_sale_value, 0) AS total_sale_value
+FROM 
+  products p
+LEFT JOIN 
+  product_sales ps 
+ON 
+  p.id = ps.product_id
+ORDER BY 
+  p.name ASC;
     `;
     const result = await pool.query(query);
     res.json(result.rows);
@@ -717,7 +721,7 @@ app.get("/api/low-stock", async (req, res) => {
 });
 
 // Fetch aggregated orders
-app.get("/api/orders", async (req, res) => {
+app.get("/api/order", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -1020,15 +1024,42 @@ app.get('/api/users', async (req, res) => {
 });
 
 // Orders
+// app.get('/api/orders', async (req, res) => {
+//   try {
+//     const result = await pool.query('SELECT * FROM orders');
+//     res.json(result.rows);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: 'Database query failed' });
+//   }
+// });
 app.get('/api/orders', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM orders');
+    const query = `
+      SELECT 
+        o.order_id,
+        o.product_id,
+        p.name AS product_name,
+        o.quantity,
+        o.total_price,
+        o.payment_method,
+        o.tracking_id,
+        o.delivery_date,
+        o.order_date,
+        o.user_id
+      FROM orders o
+      INNER JOIN products p
+      ON o.product_id = p.id
+      ORDER BY o.order_date ASC
+    `;
+    const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database query failed' });
   }
 });
+
 
 // product sales route
 app.get('/api/product-sales', async (req, res) => {
@@ -1046,6 +1077,75 @@ app.get('/api/product-sales', async (req, res) => {
   } catch (error) {
     console.error("Error retrieving sales data:", error);
     res.status(500).json({ error: "Failed to retrieve sales data" });
+  }
+});
+
+
+//searches in dashboard
+app.get('/api/dash/orders', async (req, res) => {
+  const search = req.query.search || '';
+  const filteredOrders = await Order.findAll({
+      where: {
+          product_name: { [Op.like]: `%${search}%` }
+      }
+  });
+  res.json(filteredOrders);
+});
+
+app.get("/dashboard/search/products", async (req, res) => {
+  const search = req.query.search || "";
+  try {
+    const query = `
+      SELECT * FROM products
+      WHERE LOWER(name) LIKE LOWER($1)
+      Order by name
+    `;
+    const values = [`%${search}%`];
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database query failed" });
+  }
+});
+
+// Inventory API Endpoint
+app.get("/dashboard/search/inventory", async (req, res) => {
+  try {
+    const { search = "", filter = "all" } = req.query;
+
+    let query = `
+      SELECT 
+        p.id AS product_id,
+        p.name AS product_name,
+        p.price,
+        p.count AS available_quantity,
+        COALESCE(ps.quantity_sold, 0) AS quantity_sold,
+        COALESCE(ps.total_sale_value, 0) AS total_sale_value
+      FROM 
+        products p
+      LEFT JOIN 
+        product_sales ps ON p.id = ps.product_id
+      WHERE 
+        LOWER(p.name) LIKE $1
+    `;
+
+    const values = [`%${search.toLowerCase()}%`];
+
+    // Apply filter logic for low and high stock
+    if (filter === "low-stock") {
+      query += " AND p.count < 15"; // Low stock threshold: < 15
+    } else if (filter === "high-stock") {
+      query += " AND p.count >= 15"; // High stock threshold: >= 15
+    }
+
+    query += " ORDER BY p.name ASC"; // Sort results alphabetically by product name
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching inventory:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

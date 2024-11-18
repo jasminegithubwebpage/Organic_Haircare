@@ -14,7 +14,7 @@ function VisualOrder() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('http://localhost:3002/api/orders');
+        const response = await fetch('http://localhost:3002/api/order');
         const data = await response.json();
         setOrders(data);
         setFilteredOrders(data);
