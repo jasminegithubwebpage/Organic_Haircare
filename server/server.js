@@ -21,6 +21,7 @@ const port = 3002;
 app.use(cors({ origin: "http://localhost:3000" })); // Adjust to match your frontend's URL
 app.use(express.json());
 app.use(express.static("public"));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   session({
@@ -116,6 +117,33 @@ app.get("/products", async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while retrieving products." });
+  }
+});
+app.get("/products/filter", async (req, res) => {
+  const { ingredient } = req.query;
+
+  try {
+    const query = `
+      SELECT 
+          p.id AS product_id, 
+          p.name AS product_name, 
+          p.price, 
+          p.hairproblem, 
+          p.image_url,
+          pi.ingredient
+      FROM 
+          products p
+      JOIN 
+          product_ingredients pi ON p.id = pi.id
+      WHERE 
+          $1 = ANY(pi.ingredient);
+    `;
+
+    const result = await pool.query(query, [ingredient]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching filtered products:", err);
+    res.status(500).json({ error: "Unable to filter products by ingredient." });
   }
 });
 

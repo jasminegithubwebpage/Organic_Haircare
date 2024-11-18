@@ -12,12 +12,11 @@ function Product() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch products from API
     fetch('http://localhost:3002/products')
       .then((response) => response.json())
       .then((data) => {
         setProducts(data);
-        setFilteredProducts(data); // Set initial filtered list as all products
+        setFilteredProducts(data);
       })
       .catch((error) => console.error('Error fetching products:', error));
   }, []);
@@ -49,21 +48,18 @@ function Product() {
   const applyFilters = (keyword, hairProblem, priceRange, ingredient) => {
     let filtered = products;
 
-    // Apply text search if keyword is provided
     if (keyword) {
       filtered = filtered.filter((product) =>
         product.name.toLowerCase().includes(keyword)
       );
     }
 
-    // Filter by Hair Problem if selected
     if (hairProblem) {
       filtered = filtered.filter((product) =>
         product.hairProblem === hairProblem
       );
     }
 
-    // Filter by Price Range if selected
     if (priceRange) {
       const [min, max] = priceRange.split('-');
       filtered = filtered.filter((product) =>
@@ -73,14 +69,13 @@ function Product() {
       );
     }
 
-    // Filter by Ingredient if selected
     if (ingredient) {
       filtered = filtered.filter((product) =>
         product.ingredients && product.ingredients.includes(ingredient)
       );
     }
 
-    setFilteredProducts(filtered); // Set the filtered products state
+    setFilteredProducts(filtered);
   };
 
   const handleProductClick = (id) => {
@@ -89,11 +84,31 @@ function Product() {
 
   return (
     <div className="flex flex-col items-center p-10">
-      <h1 className="text-center mb-8 text-2xl font-bold">Our Products</h1>
+      <div className="w-full flex justify-between items-center mb-8">
+        {/* Navigation Link */}
+        <Link
+          to="/"
+          className="text-m500 font-semibold px-4 py-2 rounded hover:underline"
+        >
+          Home
+        </Link>
+
+        {/* Title */}
+  <h1 className="text-center text-4xl font-bold">Our Products</h1>
+
+{/* My Cart Link */}
+<div className="w-1/4 text-right">
+  <Link
+    to="/mycart"
+    className="text-m500 font-semibold px-4 py-2 rounded hover:underline"
+  >
+    My Cart
+  </Link>
+</div>
+      </div>
 
       {/* Search and Filters */}
       <div className="flex flex-wrap justify-center gap-4 mb-8">
-        {/* Search Input */}
         <input
           type="text"
           value={searchTerm}
@@ -102,7 +117,6 @@ function Product() {
           className="px-4 py-2 border rounded-2xl w-1/2"
         />
 
-        {/* Hair Problem Filter */}
         <select
           value={hairProblem}
           onChange={handleHairProblemChange}
@@ -112,10 +126,8 @@ function Product() {
           <option value="Dryness">Dry Hair</option>
           <option value="Dandruff">Dandruff</option>
           <option value="Hair Loss">Hair Loss</option>
-          {/* Add more hair problems as needed */}
         </select>
 
-        {/* Price Range Filter */}
         <select
           value={priceRange}
           onChange={handlePriceRangeChange}
@@ -128,7 +140,6 @@ function Product() {
           <option value="30-">Above $30</option>
         </select>
 
-        {/* Ingredient Filter */}
         <select
           value={ingredient}
           onChange={handleIngredientChange}
@@ -138,7 +149,6 @@ function Product() {
           <option value="Argan Oil">Argan Oil</option>
           <option value="Coconut Oil">Coconut Oil</option>
           <option value="Tea Tree Oil">Tea Tree Oil</option>
-          {/* Populate options dynamically if possible */}
         </select>
       </div>
 
@@ -157,15 +167,7 @@ function Product() {
         )}
       </div>
 
-      {/* Navigation Links */}
-      <div className="flex flex-col items-center mt-10">
-        <Link to="/mycart" className="mb-4 p-2 border rounded w-32 text-center">
-          My Cart
-        </Link>
-        <Link to="/myorders" className="p-2 border rounded w-32 text-center">
-          My Orders
-        </Link>
-      </div>
+      
     </div>
   );
 }

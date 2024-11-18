@@ -19,7 +19,7 @@ import About from "./pages/About";
 import Contactus from "./pages/Contactus";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import MyCart from "./pages/MyCart";
-
+import ResetPasswordForm from "./pages/ResetPasswordForm";
 // Super Admin
 import SADashboard from "./components/SADashboard";
 import SALayout from "./components/SALayout";
@@ -48,7 +48,8 @@ function App() {
           <Route path="/products/:id" element={<Layout><ProductDetail /></Layout>} />
           <Route path="/login" element={<Layout><Login /></Layout>} />
           <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
-
+          <Route path="/reset" element={<Layout><ResetPasswordForm /></Layout>}/>
+          <Route path="/payment" element={<Layout><PaymentForm/></Layout>} />
           {/* Admin Routes */}
           <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
           <Route path="/dashboard/customer" element={<AdminLayout><Customers /></AdminLayout>} />
