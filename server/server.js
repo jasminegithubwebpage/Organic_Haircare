@@ -147,6 +147,8 @@ app.get("/products/filter", async (req, res) => {
   }
 });
 
+
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
@@ -399,34 +401,34 @@ const upload2 = multer({ storage: storage2 }).single("image_url");
 
 
 // Endpoint to add products
-app.post('/AddProducts', (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ success: false, message: 'File upload error' });
-    }
+// app.post('/AddProducts', (req, res) => {
+//   upload(req, res, async (err) => {
+//     if (err) {
+//       return res.status(400).json({ success: false, message: 'File upload error' });
+//     }
 
-    const { name, info, price, count, discount, added_date } = req.body;
-    const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
+//     const { name, info, price, count, discount, added_date } = req.body;
+//     const imageUrl = req.file ? `/assets/${req.file.filename}` : ''; // Save relative path
 
-    if (!name) {
-      return res.status(400).json({ success: false, message: 'Product name is required' });
-    }
+//     if (!name) {
+//       return res.status(400).json({ success: false, message: 'Product name is required' });
+//     }
 
-    try {
-      const query = `
-        INSERT INTO products (name, info, price, image_url, count, discount, added_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *;
-      `;
-      const values = [name, info, price, imageUrl, count, discount, added_date];
-      const result = await pool.query(query, values);
-      res.status(201).json({ success: true, product: result.rows[0] });
-    } catch (error) {
-      console.error('Error adding product:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  });
-});
+//     try {
+//       const query = `
+//         INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+//         VALUES ($1, $2, $3, $4, $5, $6, $7)
+//         RETURNING *;
+//       `;
+//       const values = [name, info, price, imageUrl, count, discount, added_date];
+//       const result = await pool.query(query, values);
+//       res.status(201).json({ success: true, product: result.rows[0] });
+//     } catch (error) {
+//       console.error('Error adding product:', error);
+//       res.status(500).json({ success: false, message: 'Server error' });
+//     }
+//   });
+// });
 
 // user signin
 app.post("/signin", async (req, res) => {
@@ -840,15 +842,6 @@ if (!fs.existsSync(assetFolder)) {
   console.log("'public/assets' folder already exists.");
 }
 
-// // Configure multer storage for file uploads
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, assetFolder); // Save to "public/assets" folder
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, file.originalname); // Save file with original name
-//   },
-// });
 
 // const storage = multer({ storage }).single("image_url");
 
@@ -1146,6 +1139,76 @@ app.get("/dashboard/search/inventory", async (req, res) => {
   } catch (error) {
     console.error("Error fetching inventory:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get all users
+app.get("/dashboard/search/users", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM users order by username asc");
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).send("Error fetching users");
+  }
+});
+
+
+//addproducts
+// const express3 = require("express");
+// const multer3 = require("multer");
+// const path3 = require("path");
+
+// Middleware to parse JSON and form data
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+
+
+// Ensure the 'assets' directory exists
+const assetsDir = path.join(__dirname, "assets");
+if (!fs.existsSync(assetsDir)) {
+  fs.mkdirSync(assetsDir, { recursive: true });
+}
+
+// Configure multer with storage3
+const storage3 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, assetsDir); // Save files to the 'assets' folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Keep the original file name
+  },
+});
+
+// Use storage3 for upload3
+const upload3 = multer({ storage: storage3 });
+
+// Serve static files from the 'assets' folder
+app.use("/assets", express.static(assetsDir));
+
+// Define route to handle product addition
+app.post("/AddProduct", upload3.single("image_url"), async (req, res) => {
+  try {
+    const { name, info, price, count, discount, added_date } = req.body;
+    const imageUrl = `/assets/${req.file.filename}`;
+
+    // Insert into PostgreSQL database
+    const query = `
+      INSERT INTO products (name, info, price, image_url, count, discount, added_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+    const values = [name, info, price, imageUrl, count, discount, added_date];
+
+    const result = await pool.query(query, values);
+
+    res.status(200).json({
+      message: "Product added successfully",
+      product: result.rows[0], // Return the inserted product
+    });
+  } catch (err) {
+    console.error("Error adding product:", err);
+    res.status(500).json({ message: "Error adding product", error: err.message });
   }
 });
 
