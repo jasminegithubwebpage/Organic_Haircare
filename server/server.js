@@ -122,32 +122,66 @@ app.get("/products", async (req, res) => {
   }
 });
 app.get("/products/filter", async (req, res) => {
-  const { ingredient } = req.query;
+  const { ingredient, hairProblem, priceRange } = req.query;
+
+  // Initialize conditions and parameters
+  let conditions = [];
+  let params = [];
+
+  // Handle Ingredient Filter
+  if (ingredient) {
+    conditions.push("$1 = ANY(pi.ingredient)");
+    params.push(ingredient);
+  }
+
+  // Handle Hair Problem Filter
+  if (hairProblem) {
+    conditions.push(`p.hair_problem = $${params.length + 1}`);
+    params.push(hairProblem);
+  }
+
+  // Handle Price Range Filter
+  if (priceRange) {
+    const [min, max] = priceRange.split("-");
+    if (max) {
+      conditions.push(`p.price BETWEEN $${params.length + 1} AND $${params.length + 2}`);
+      params.push(min, max);
+    } else {
+      conditions.push(`p.price >= $${params.length + 1}`);
+      params.push(min);
+    }
+  }
+
+  // Construct WHERE Clause
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // Query Construction
+  const query = `
+    SELECT 
+        p.id AS product_id, 
+        p.name AS product_name, 
+        p.price, 
+        p.hair_problem, 
+        p.image_url, 
+        pi.ingredient
+    FROM 
+        products p
+    LEFT JOIN 
+        product_ingredients pi ON p.id = pi.id
+    ${whereClause};
+  `;
 
   try {
-    const query = `
-      SELECT 
-          p.id AS product_id, 
-          p.name AS product_name, 
-          p.price, 
-          p.hairproblem, 
-          p.image_url,
-          pi.ingredient
-      FROM 
-          products p
-      JOIN 
-          product_ingredients pi ON p.id = pi.id
-      WHERE 
-          $1 = ANY(pi.ingredient);
-    `;
-
-    const result = await pool.query(query, [ingredient]);
+    // Execute Query
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching filtered products:", err);
-    res.status(500).json({ error: "Unable to filter products by ingredient." });
+    res.status(500).json({ error: "Unable to filter products." });
   }
 });
+
+
 
 // Start server
 app.listen(port, () => {
@@ -361,10 +395,10 @@ const storage1 = multer.diskStorage({
   }
 });
 
-const upload1 = multer({
-  storage: storage1,
-  limits: { fileSize: 1000000 } // Limit file size to 1MB
-}).single('image_url');
+// const upload = multer({
+//   storage: storage1,
+//   limits: { fileSize: 1000000 } // Limit file size to 1MB
+// }).single('image_url');
 
 // Second Multer configuration for file uploads
 const storage2 = multer.diskStorage({
@@ -942,6 +976,10 @@ app.put("/cart/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to update quantity" });
   }
 });
+const upload = multer({
+  storage: storage1,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5 MB
+});
 
 // Add a Product with Image Upload
 app.post("/AddProducts", (req, res) => {
@@ -1052,6 +1090,31 @@ app.get('/api/product-sales', async (req, res) => {
   } catch (error) {
     console.error("Error retrieving sales data:", error);
     res.status(500).json({ error: "Failed to retrieve sales data" });
+  }
+});
+app.get("/api/Allorders", async (req, res) => {
+  const { userId } = req.query; // Retrieve userId from query parameters
+
+  if (!userId) {
+    return res.status(400).send("User ID is required");
+  }
+  console.log(userId);
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        order_id, product_id, quantity, total_price, 
+        payment_method, tracking_id, delivery_date, order_date 
+      FROM orders
+      WHERE user_id = $1
+    `,
+      [userId] // Use parameterized queries to prevent SQL injection
+    );
+    console.log(result);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).send("Error fetching orders");
   }
 });
 

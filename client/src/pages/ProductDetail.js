@@ -52,25 +52,28 @@ const ProductDetail = () => {
   const totalPrice = product.price * quantity;
   const handleBuyNow = async () => {
     try {
-      // Retrieve user ID from the current session (or UserContext)
-      const userId = user?.id; // Assuming `user` is stored in context or wherever your authentication info is available
+      console.log("Buy Now clicked");
+      const userId = user?.id;
+      console.log("User ID:", userId);
   
-      // If userId is not found, it means the user is not logged in
       if (!userId) {
-        navigate("/login"); // Redirect to login if not authenticated
+        console.log("User not authenticated, redirecting to login");
+        navigate("/login");
         return;
       }
   
-      // Send the user ID to the backend for authentication check
       const response = await axios.get("http://localhost:3002/api/auth/check", {
-        params: { userId }, // Send userId in query parameters
+        params: { userId },
       });
   
+      console.log("Auth Check Response:", response.data);
+  
       if (response.data.isAuthenticated) {
-        // If the backend confirms the user is authenticated, proceed to payment
+        console.log("User is authenticated, navigating to payment");
         navigate("/payment", { state: { productData: [product], totalPrice } });
+
       } else {
-        // If the backend responds that the user is not authenticated, redirect to login
+        console.log("User not authenticated, redirecting to login");
         navigate("/login");
       }
     } catch (error) {
@@ -78,6 +81,7 @@ const ProductDetail = () => {
       navigate("/login");
     }
   };
+  
   
   if (!product.name) {
     return <p>Loading product details...</p>;
