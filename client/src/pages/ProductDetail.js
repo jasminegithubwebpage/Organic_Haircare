@@ -70,8 +70,13 @@ const ProductDetail = () => {
   
       if (response.data.isAuthenticated) {
         console.log("User is authenticated, navigating to payment");
-        navigate("/payment", { state: { productData: [product], totalPrice } });
-
+  
+        const quantity = product.quantity || 1; // Default to 1 if quantity is not available
+        const totalPrice = product.price * quantity;
+  
+        console.log({ productData: [product], totalPrice });
+        navigate("/payment", { state: { productData: [{ ...product, quantity }], totalPrice } });
+  
       } else {
         console.log("User not authenticated, redirecting to login");
         navigate("/login");
@@ -81,6 +86,7 @@ const ProductDetail = () => {
       navigate("/login");
     }
   };
+  
   
   
   if (!product.name) {

@@ -5,15 +5,12 @@ import { useUser } from "../pages/UserContext";
 
 const PaymentForm = () => {
   const location = useLocation();
-  const { product, quantity: initialQuantity } = location.state || {};
+  const { productData, totalPrice: initialTotalPrice } = location.state || {};
   const { user } = useUser();
   const userId = user?.id || null;
   const navigate = useNavigate();
+  console.log("Product Data:", productData);
 
-  const [quantity, setQuantity] = useState(initialQuantity || 1);
-  const productPrice = Number(product?.price) || 0;
-  const totalPrice = quantity * productPrice;
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [address, setAddress] = useState({
     area: "",
     city: "",
@@ -21,50 +18,79 @@ const PaymentForm = () => {
     country: "",
     zipcode: ""
   });
+  const [paymentMethod, setPaymentMethod] = useState("UPI");
+
+  // Calculate total price from product array
+  const calculatedTotalPrice = productData
+    ? productData.reduce((total, product) => total + Number(product.price || 0), 0)
+    : 0;
+
+  const totalPrice = initialTotalPrice || calculatedTotalPrice;
+  const productNames = productData
+  ? productData.map((product) => product.name).join(", ")
+  : "";
+
 
   useEffect(() => {
-    if (!product || !userId) {
+    if (!productData || !userId) {
       // Navigate back if data is missing
       navigate("/mycart");
     }
-  }, [product, userId, navigate]);
+  }, [productData, userId, navigate]);
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
     setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleIncrement = () => setQuantity(quantity + 1);
-  const handleDecrement = () => quantity > 1 && setQuantity(quantity - 1);
-
   const trackingID = `TRACK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   const deliveryDate = new Date();
   deliveryDate.setDate(deliveryDate.getDate() + 7);
   const formattedDeliveryDate = deliveryDate.toISOString().split("T")[0];
 
-  const orderData = {
-    user_id: userId,
-    product_id: product?.id,
-    product_name: product?.name,
-    quantity,
-    total_price: totalPrice,
-    payment_method: paymentMethod,
-    tracking_id: trackingID,
-    delivery_date: formattedDeliveryDate,
-    address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
-    order_date: new Date().toISOString().split("T")[0]
-  };
+  // const orderData = {
+  //   user_id: userId,
+  //   products: productData,
+  //   total_price: totalPrice,
+  //   payment_method: paymentMethod,
+  //   tracking_id: trackingID,
+  //   delivery_date: formattedDeliveryDate,
+  //   address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+  //   order_date: new Date().toISOString().split("T")[0]
+  // };
 
   const handleProceed = async () => {
     try {
-      const response = await axios.post("http://localhost:3002/orders", orderData);
+      const orderData = {
+        user_id: userId,
+        products: JSON.stringify(
+          productData.map((product) => ({
+            id: product.id,
+            quantity: product.quantity
+          }))
+        ),  // Ensure this is correctly stringified
+        total_price: totalPrice,
+        payment_method: paymentMethod,
+        tracking_id: trackingID,
+        delivery_date: formattedDeliveryDate,
+        address: `${address.area}, ${address.city}, ${address.state}, ${address.country} - ${address.zipcode}`,
+        order_date: new Date().toISOString().split("T")[0],
+      };
+  
+      // Ensure that you send the correct object as the body
+      const response = await axios.post("http://localhost:3002/orders", orderData, {
+        headers: {
+          "Content-Type": "application/json" // Ensure the content type is JSON
+        }
+      });
+  
       console.log("Order saved successfully:", response.data);
-      navigate("/payment-success", { state: { orderData, productName: product.name } });
+      navigate("/payment-success", { state: { orderData, productNames } });
     } catch (error) {
       console.error("Error saving order details:", error);
     }
   };
-
+  
   return (
     <div className="container mx-auto py-12 flex flex-col md:flex-row justify-center gap-6 items-center">
       <div className="bg-b100 p-8 rounded-lg shadow-md w-full md:w-1/2">
@@ -101,22 +127,8 @@ const PaymentForm = () => {
         <div className="mb-4">
           <h4 className="font-bold">Order Summary</h4>
           <div className="flex justify-between p-2">
-            <p>Product name:</p>
-            <p>{product?.name}</p>
-          </div>
-
-          <div className="flex justify-between p-2">
-            <p>Price per item:</p>
-            <p>${productPrice.toFixed(2)}</p>
-          </div>
-
-          <div className="flex justify-between p-2 items-center">
-            <p>Quantity:</p>
-            <div className="flex items-center">
-              <button onClick={handleDecrement} className="px-2">-</button>
-              <p className="mx-2">{quantity}</p>
-              <button onClick={handleIncrement} className="px-2">+</button>
-            </div>
+            <p>Products:</p>
+            <p>{productNames}</p>
           </div>
 
           <hr />

@@ -657,85 +657,97 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-// Place an Order
 app.post("/orders", async (req, res) => {
   const {
-    user_id, // Add user_id if required for tracking orders by user
-    product_id,
-    quantity,
+    user_id,
+    products, // Expecting a stringified array of products
     total_price,
     payment_method,
     tracking_id,
     delivery_date,
-    address, // Optional: Include if delivery requires an address
-    order_date, // Optional: Include if the order date needs to be recorded
+    address,
+    order_date,
   } = req.body;
 
-  // Validate required fields
-  if (!product_id || !quantity || !total_price || !payment_method) {
+  if (!products || !total_price || !payment_method) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
+    // Parse the products array
+    const parsedProducts = JSON.parse(products);
+
+    // Validate that all products have an `id` and `quantity`
+    for (const product of parsedProducts) {
+      if (!product.id || !product.quantity) {
+        return res.status(400).json({
+          message: `Invalid product data: ${JSON.stringify(product)}`,
+        });
+      }
+    }
+
     // Start a transaction
     await pool.query("BEGIN");
 
-    // Check product stock
-    const countQuery = "SELECT count FROM products WHERE id = $1";
-    const countResult = await pool.query(countQuery, [product_id]);
+    // Process each product
+    for (const product of parsedProducts) {
+      const { id: product_id, quantity } = product;
 
-    if (countResult.rows.length === 0) {
-      return res.status(404).json({ message: "Product not found" });
+      // Check product stock
+      const countQuery = "SELECT count FROM products WHERE id = $1";
+      const countResult = await pool.query(countQuery, [product_id]);
+
+      if (countResult.rows.length === 0) {
+        throw new Error(`Product ID ${product_id} not found`);
+      }
+
+      const currentCount = countResult.rows[0].count;
+
+      if (currentCount < quantity) {
+        throw new Error(`Insufficient stock for Product ID ${product_id}`);
+      }
+
+      // Update product stock
+      const newCount = currentCount - quantity;
+      const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
+      await pool.query(updateCountQuery, [newCount, product_id]);
+
+      // Insert the order for each product
+      const orderQuery = `
+        INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `;
+      const orderValues = [
+        user_id,
+        product_id,
+        quantity,
+        total_price,
+        payment_method,
+        tracking_id,
+        delivery_date,
+        address,
+        order_date,
+      ];
+      await pool.query(orderQuery, orderValues);
+
+      // Log low-stock warning
+      if (newCount < 5) {
+        console.log(`Warning: Product ID ${product_id} stock is low!`);
+      }
     }
-
-    const currentCount = countResult.rows[0].count;
-
-    // Validate stock availability
-    if (currentCount < quantity) {
-      return res.status(400).json({ message: "Insufficient stock for this order" });
-    }
-
-    // Update product stock
-    const newCount = currentCount - quantity;
-    const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
-    await pool.query(updateCountQuery, [newCount, product_id]);
-
-    // Insert the order
-    const orderQuery = `
-      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *;
-    `;
-    const orderValues = [
-      user_id,
-      product_id,
-      quantity,
-      total_price,
-      payment_method,
-      tracking_id,
-      delivery_date,
-      address,
-      order_date,
-    ];
-    const orderResult = await pool.query(orderQuery, orderValues);
 
     // Commit the transaction
     await pool.query("COMMIT");
 
-    // Low-stock alert
-    if (newCount < 5) {
-      console.log(`Alert: Product ID ${product_id} stock is below threshold!`);
-    }
-
-    // Return the created order
-    res.status(201).json(orderResult.rows[0]);
+    res.status(201).json({ message: "Order placed successfully" });
   } catch (error) {
-    // Rollback the transaction on error
+    // Rollback transaction on error
     await pool.query("ROLLBACK");
     console.error("Error processing order:", error);
-    res.status(500).json({ message: "Error saving order details" });
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 // Fetch low-stock products
 app.get("/api/low-stock", async (req, res) => {
