@@ -121,65 +121,47 @@ app.get("/products", async (req, res) => {
       .json({ error: "An error occurred while retrieving products." });
   }
 });
-app.get("/products/filter", async (req, res) => {
-  const { ingredient, hairProblem, priceRange } = req.query;
-
-  // Initialize conditions and parameters
-  let conditions = [];
-  let params = [];
-
-  // Handle Ingredient Filter
-  if (ingredient) {
-    conditions.push("$1 = ANY(pi.ingredient)");
-    params.push(ingredient);
-  }
-
-  // Handle Hair Problem Filter
-  if (hairProblem) {
-    conditions.push(`p.hair_problem = $${params.length + 1}`);
-    params.push(hairProblem);
-  }
-
-  // Handle Price Range Filter
-  if (priceRange) {
-    const [min, max] = priceRange.split("-");
-    if (max) {
-      conditions.push(`p.price BETWEEN $${params.length + 1} AND $${params.length + 2}`);
-      params.push(min, max);
-    } else {
-      conditions.push(`p.price >= $${params.length + 1}`);
-      params.push(min);
-    }
-  }
-
-  // Construct WHERE Clause
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-  // Query Construction
-  const query = `
-    SELECT 
-        p.id AS product_id, 
-        p.name AS product_name, 
-        p.price, 
-        p.hair_problem, 
-        p.image_url, 
-        pi.ingredient
-    FROM 
-        products p
-    LEFT JOIN 
-        product_ingredients pi ON p.id = pi.id
-    ${whereClause};
-  `;
+app.get('/products/filter', async (req, res) => {
+  const { hairProblem, ingredient, priceRange } = req.query;
 
   try {
-    // Execute Query
-    const result = await pool.query(query, params);
+    let query = 'SELECT * FROM products WHERE 1=1';
+    const values = [];
+
+    if (hairProblem) {
+      query += ' AND LOWER(hair_problem) = LOWER($1)';
+      values.push(hairProblem);
+    }
+
+    if (ingredient) {
+      query += ' AND ingredient::text ILIKE $2';
+      values.push(`%${ingredient}%`);
+    }
+
+    // Handle price range filter
+    if (priceRange) {
+      const [minPrice, maxPrice] = priceRange.split('-');
+      if (maxPrice) {
+        query += ' AND price BETWEEN $3 AND $4';
+        values.push(minPrice, maxPrice);
+      } else {
+        query += ' AND price >= $3';  // For "Above $30"
+        values.push(minPrice);
+      }
+    }
+
+    // Log query to debug
+    console.log('Final query:', query);
+    
+    const result = await pool.query(query, values);
     res.json(result.rows);
   } catch (err) {
-    console.error("Error fetching filtered products:", err);
-    res.status(500).json({ error: "Unable to filter products." });
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
+
+
 
 
 

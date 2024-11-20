@@ -1,81 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import Card from '../components/Card';
+import { Link, useNavigate } from 'react-router-dom';
+import Card from "../components/Card";
 
-function Product() {
+const Product = () => {
   const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [hairProblem, setHairProblem] = useState('');
   const [priceRange, setPriceRange] = useState('');
   const [ingredient, setIngredient] = useState('');
+
   const navigate = useNavigate();
 
+  // Fetch all products on component mount
   useEffect(() => {
     fetch('http://localhost:3002/products')
       .then((response) => response.json())
       .then((data) => {
+        console.log('Fetched products:', data);
         setProducts(data);
         setFilteredProducts(data);
       })
       .catch((error) => console.error('Error fetching products:', error));
   }, []);
 
+  // Fetch filtered products based on selected filters
+  const fetchFilteredProducts = () => {
+    let url = 'http://localhost:3002/products/filter?';
+
+    // Construct URL with the selected filters
+    if (hairProblem) url += `hairProblem=${encodeURIComponent(hairProblem)}&`;
+    if (ingredient) url += `ingredient=${encodeURIComponent(ingredient)}&`;
+    if (priceRange) url += `priceRange=${encodeURIComponent(priceRange)}`;
+
+    // If no filter is applied, fetch all products
+    if (!hairProblem && !ingredient && !priceRange) {
+      setFilteredProducts(products); // Show all products
+    } else {
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log('Filtered products:', data);
+          setFilteredProducts(data);
+        })
+        .catch((error) => console.error('Error fetching filtered products:', error));
+    }
+  };
+
+  // Handle filter changes
   const handleSearchChange = (event) => {
-    const keyword = event.target.value.toLowerCase();
-    setSearchTerm(keyword);
-    applyFilters(keyword, hairProblem, priceRange, ingredient);
+    setSearchTerm(event.target.value);
+    fetchFilteredProducts();
   };
 
   const handleHairProblemChange = (event) => {
-    const selectedProblem = event.target.value;
-    setHairProblem(selectedProblem);
-    applyFilters(searchTerm, selectedProblem, priceRange, ingredient);
+    setHairProblem(event.target.value);
+    fetchFilteredProducts();
   };
 
   const handlePriceRangeChange = (event) => {
-    const selectedPrice = event.target.value;
-    setPriceRange(selectedPrice);
-    applyFilters(searchTerm, hairProblem, selectedPrice, ingredient);
+    setPriceRange(event.target.value);
+    fetchFilteredProducts();
   };
 
   const handleIngredientChange = (event) => {
-    const selectedIngredient = event.target.value;
-    setIngredient(selectedIngredient);
-    applyFilters(searchTerm, hairProblem, priceRange, selectedIngredient);
-  };
-
-  const applyFilters = (keyword, hairProblem, priceRange, ingredient) => {
-    let filtered = products;
-
-    if (keyword) {
-      filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(keyword)
-      );
-    }
-
-    if (hairProblem) {
-      filtered = filtered.filter((product) =>
-        product.hairProblem === hairProblem
-      );
-    }
-
-    if (priceRange) {
-      const [min, max] = priceRange.split('-');
-      filtered = filtered.filter((product) =>
-        !max
-          ? product.price >= min
-          : product.price >= min && product.price <= max
-      );
-    }
-
-    if (ingredient) {
-      filtered = filtered.filter((product) =>
-        product.ingredients && product.ingredients.includes(ingredient)
-      );
-    }
-
-    setFilteredProducts(filtered);
+    setIngredient(event.target.value);
+    fetchFilteredProducts();
   };
 
   const handleProductClick = (id) => {
@@ -94,17 +84,17 @@ function Product() {
         </Link>
 
         {/* Title */}
-  <h1 className="text-center text-4xl font-bold">Our Products</h1>
+        <h1 className="text-center text-4xl font-bold">Our Products</h1>
 
-{/* My Cart Link */}
-<div className="w-1/4 text-right">
-  <Link
-    to="/mycart"
-    className="text-m500 font-semibold px-4 py-2 rounded hover:underline"
-  >
-    My Cart
-  </Link>
-</div>
+        {/* My Cart Link */}
+        <div className="w-1/4 text-right">
+          <Link
+            to="/mycart"
+            className="text-m500 font-semibold px-4 py-2 rounded hover:underline"
+          >
+            My Cart
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -166,10 +156,8 @@ function Product() {
           <p>No products found</p>
         )}
       </div>
-
-      
     </div>
   );
-}
+};
 
 export default Product;
