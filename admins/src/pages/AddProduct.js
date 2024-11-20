@@ -45,7 +45,7 @@ function AddProduct() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3002/AddProducts",
+        "http://localhost:3002/AddProduct",
         formData,
         {
           headers: {

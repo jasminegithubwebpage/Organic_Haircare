@@ -1,54 +1,55 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const Customers = () => {
+const SACustomer = () => {
   const [customers, setCustomers] = useState([]);
 
-  // Fetch customer details from the backend
-  const fetchCustomers = async () => {
-    try {
-      const response = await axios.get("http://localhost:3002/api/customers");
-      setCustomers(response.data);
-    } catch (error) {
-      console.error("Error fetching customer data:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axios.get("http://localhost:3002/dashboard/search/users");
+        setCustomers(response.data);
+      } catch (error) {
+        console.error("Error fetching customer data:", error);
+      }
+    };
+
     fetchCustomers();
   }, []);
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Customer Details</h2>
-      <table className="min-w-full bg-white border border-gray-300 rounded shadow">
+    <>
+      <h3 className="mb-4">Customers</h3>
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-gray-200">
-            <th className="py-3 px-4 border-b">Customer ID</th>
-            <th className="py-3 px-4 border-b">Username</th>
-            <th className="py-3 px-4 border-b">Email</th>
+          <tr>
+            <th className="border-b px-4 py-2">Name</th>
+            <th className="border-b px-4 py-2">Email</th>
+            <th className="border-b px-4 py-2">City</th>
+            <th className="border-b px-4 py-2">Country</th>
           </tr>
         </thead>
-        <tbody className="text-start">
+        <tbody>
           {customers.length > 0 ? (
-            customers.map((customer) => (
-              <tr key={customer.id} className="hover:bg-gray-100 ">
-                <td className="py-3 px-4 border-b">{customer.id}</td>
-                <td className="py-3 px-4 border-b">{customer.username}</td>
-                <td className="py-3 px-4 border-b">{customer.email}</td>
+            customers.map((customer, index) => (
+              <tr key={index}>
+                <td className="border-b px-4 py-2">{customer.username}</td>
+                <td className="border-b px-4 py-2">{customer.email}</td>
+                <td className="border-b px-4 py-2">{customer.city || "N/A"}</td>
+                <td className="border-b px-4 py-2">{customer.country || "N/A"}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="3" className="py-3 px-4 border-b text-center">
-                No customers found.
+              <td colSpan="4" className="border-b px-4 py-2 text-center">
+                No Customers Found
               </td>
             </tr>
           )}
         </tbody>
       </table>
-    </div>
+    </>
   );
 };
 
-export default Customers;
+export default SACustomer;

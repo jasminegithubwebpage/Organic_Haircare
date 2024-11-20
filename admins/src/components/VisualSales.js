@@ -137,45 +137,110 @@ function VisualSales() {
     <div>
       <h2>Product Sales</h2>
 
-      {/* Date Filter */}
-      <div className="flex">
-      <div>
-        <div>
-        <label>Start Date:</label>
-        <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} />
-        <label>End Date:</label>
-        <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} />
-        </div>
-        <div>
-        <button className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90" onClick={handleDateFilter}>Filter by Date</button>
-        </div>
-      </div>
-
-      {/* Quantity Filter */}
-      <div>
-        <div>
-        <label>Min Quantity Sold:</label>
-        <input
-          type="number"
-          value={minQuantity}
-          onChange={(e) => setMinQuantity(Number(e.target.value))}
-        />
-        <label>Max Quantity Sold:</label>
-        <input
-          type="number"
-          value={maxQuantity}
-          onChange={(e) => setMaxQuantity(Number(e.target.value) || Infinity)}
-        />
-        </div>
-        <div>
-        <button className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90" onClick={handleQuantityFilter}>Filter by Quantity</button>
-        </div>
-      </div>
-           {/* Toggle Dropdown for Product Selection */}
-           <button onClick={toggleDropdown} className="dropdown-toggle px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90">
-        Select Products
+      <div className="p-6 bg-gray-100 rounded-lg shadow-md space-y-6">
+  {/* Date Filter Section */}
+  <div className="flex flex-col md:flex-row gap-6">
+    <div className="flex flex-col gap-4">
+      <label className="block text-gray-700 text-sm font-bold mb-1">
+        Start Date:
+      </label>
+      <DatePicker
+        selected={startDate}
+        onChange={(date) => setStartDate(date)}
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+    <div className="flex flex-col gap-4">
+      <label className="block text-gray-700 text-sm font-bold mb-1">
+        End Date:
+      </label>
+      <DatePicker
+        selected={endDate}
+        onChange={(date) => setEndDate(date)}
+        className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+    <div className="self-end md:self-center">
+      <button
+        onClick={handleDateFilter}
+        className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-opacity-50"
+      >
+        Filter by Date
       </button>
+    </div>
+  </div>
+
+  {/* Quantity Filter Section */}
+  <div className="flex flex-col md:flex-row gap-6 items-center">
+    <div className="flex flex-col">
+      <label className="block text-gray-700 text-sm font-bold mb-1">
+        Min Quantity Sold:
+      </label>
+      <input
+        type="number"
+        value={minQuantity}
+        onChange={(e) => setMinQuantity(Number(e.target.value))}
+        className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Min Quantity"
+      />
+    </div>
+    <div className="flex flex-col">
+      <label className="block text-gray-700 text-sm font-bold mb-1">
+        Max Quantity Sold:
+      </label>
+      <input
+        type="number"
+        value={maxQuantity}
+        onChange={(e) => setMaxQuantity(Number(e.target.value) || Infinity)}
+        className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Max Quantity"
+      />
+    </div>
+    <div className="self-end md:self-center">
+      <button
+        onClick={handleQuantityFilter}
+        className="px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-opacity-50"
+      >
+        Filter by Quantity
+      </button>
+    </div>
+  </div>
+
+  {/* Product Selection Dropdown */}
+  <div className="relative">
+    <button
+      onClick={toggleDropdown}
+      className="dropdown-toggle px-4 py-2 bg-burgundy text-white text-sm font-medium rounded-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-opacity-50"
+    >
+      Select Products
+    </button>
+    {isDropdownOpen && (
+      <div className="absolute z-10 mt-2 bg-white border border-gray-200 rounded-lg shadow-md w-64">
+        <h3 className="p-4 text-gray-700 font-bold border-b">Select Products</h3>
+        <div className="p-4 space-y-2 max-h-60 overflow-y-auto">
+          {Object.keys(selectedProducts).map((productName) => (
+            <div
+              key={productName}
+              className="flex items-center justify-between text-sm text-gray-600"
+            >
+              <label htmlFor={productName} className="cursor-pointer">
+                {productName}
+              </label>
+              <input
+                id={productName}
+                type="checkbox"
+                checked={selectedProducts[productName]}
+                onChange={() => handleCheckboxChange(productName)}
+                className="cursor-pointer"
+              />
+            </div>
+          ))}
+        </div>
       </div>
+    )}
+  </div>
+</div>
+
 
  
 
