@@ -26,9 +26,12 @@ const PaymentForm = () => {
     : 0;
 
   const totalPrice = initialTotalPrice || calculatedTotalPrice;
-  const productNames = productData
-  ? productData.map((product) => product.name).join(", ")
+  const productNames = productData && productData.length > 0
+  ? productData.length === 1
+    ? productData[0].name // If there's only one product, return its name directly
+    : productData.map((products) => products.name).join(", ") // If multiple products, join their names
   : "";
+
 
 
   useEffect(() => {
@@ -66,6 +69,7 @@ const PaymentForm = () => {
         products: JSON.stringify(
           productData.map((product) => ({
             id: product.id,
+            name:product.name,
             quantity: product.quantity
           }))
         ),  // Ensure this is correctly stringified
@@ -85,6 +89,8 @@ const PaymentForm = () => {
       });
   
       console.log("Order saved successfully:", response.data);
+      console.log(orderData);
+      console.log(productNames);
       navigate("/payment-success", { state: { orderData, productNames } });
     } catch (error) {
       console.error("Error saving order details:", error);

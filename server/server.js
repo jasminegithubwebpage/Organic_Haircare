@@ -121,8 +121,8 @@ app.get("/products", async (req, res) => {
       .json({ error: "An error occurred while retrieving products." });
   }
 });
-app.get("/products/filter", async (req, res) => {
-  const { ingredient, hairProblem, priceRange } = req.query;
+app.get('/products/filter', async (req, res) => {
+  const { hairProblem, ingredient, priceRange } = req.query;
 
   // Initialize conditions and parameters
   let conditions = [];
@@ -176,8 +176,8 @@ app.get("/products/filter", async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
-    console.error("Error fetching filtered products:", err);
-    res.status(500).json({ error: "Unable to filter products." });
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 
