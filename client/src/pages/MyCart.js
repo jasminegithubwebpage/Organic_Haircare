@@ -76,24 +76,34 @@ const MyCart = () => {
   };
 
   const handleIndividualBuyNow = (product) => {
+    // Ensure quantity is available or set to 1 if not
+    const quantity = product.quantity || 1;
     navigate("/payment", {
-      state: { product, quantity: product.quantity, id: product.id },
+      state: {
+        productData: [{ ...product, quantity }], // Wrap product in an array for consistency
+        totalPrice: product.price * quantity,   // Calculate totalPrice based on quantity
+      },
     });
-    toast.success("Proceeding to checkout for selected product");
+    toast.success(`Proceeding to checkout for ${product.product_name}`);
   };
-
+  
   const handleOverallBuyNow = () => {
+    // Make sure to calculate totalPrice based on the cart products
     const productData = products.map((product) => ({
-      product: product.product_name,
+      product: product.name, // Make sure this matches the key used in the cart
       quantity: product.quantity,
-      id: product.cart_id,
+      id: product.id,
       price: product.price,
     }));
-
+    
+    const totalPrice = products.reduce((acc, product) => acc + (product.price * product.quantity), 0);
+  
+    console.log(productData);
     navigate("/payment", { state: { productData, totalPrice } });
     toast.success("Proceeding to checkout");
   };
-
+  
+  
   return (
     <div className="flex w-full p-4 gap-4">
       <div className="w-1/2">

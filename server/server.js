@@ -122,30 +122,62 @@ app.get("/products", async (req, res) => {
   }
 });
 app.get("/products/filter", async (req, res) => {
-  const { ingredient } = req.query;
+  const { ingredient, hairProblem, priceRange } = req.query;
+
+  // Initialize conditions and parameters
+  let conditions = [];
+  let params = [];
+
+  // Handle Ingredient Filter
+  if (ingredient) {
+    conditions.push("$1 = ANY(pi.ingredient)");
+    params.push(ingredient);
+  }
+
+  // Handle Hair Problem Filter
+  if (hairProblem) {
+    conditions.push(`p.hair_problem = $${params.length + 1}`);
+    params.push(hairProblem);
+  }
+
+  // Handle Price Range Filter
+  if (priceRange) {
+    const [min, max] = priceRange.split("-");
+    if (max) {
+      conditions.push(`p.price BETWEEN $${params.length + 1} AND $${params.length + 2}`);
+      params.push(min, max);
+    } else {
+      conditions.push(`p.price >= $${params.length + 1}`);
+      params.push(min);
+    }
+  }
+
+  // Construct WHERE Clause
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+  // Query Construction
+  const query = `
+    SELECT 
+        p.id AS product_id, 
+        p.name AS product_name, 
+        p.price, 
+        p.hair_problem, 
+        p.image_url, 
+        pi.ingredient
+    FROM 
+        products p
+    LEFT JOIN 
+        product_ingredients pi ON p.id = pi.id
+    ${whereClause};
+  `;
 
   try {
-    const query = `
-      SELECT 
-          p.id AS product_id, 
-          p.name AS product_name, 
-          p.price, 
-          p.hairproblem, 
-          p.image_url,
-          pi.ingredient
-      FROM 
-          products p
-      JOIN 
-          product_ingredients pi ON p.id = pi.id
-      WHERE 
-          $1 = ANY(pi.ingredient);
-    `;
-
-    const result = await pool.query(query, [ingredient]);
+    // Execute Query
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching filtered products:", err);
-    res.status(500).json({ error: "Unable to filter products by ingredient." });
+    res.status(500).json({ error: "Unable to filter products." });
   }
 });
 
@@ -367,10 +399,10 @@ const storage1 = multer.diskStorage({
   }
 });
 
-const upload1 = multer({
-  storage: storage1,
-  limits: { fileSize: 1000000 } // Limit file size to 1MB
-}).single('image_url');
+// const upload = multer({
+//   storage: storage1,
+//   limits: { fileSize: 1000000 } // Limit file size to 1MB
+// }).single('image_url');
 
 // Second Multer configuration for file uploads
 const storage2 = multer.diskStorage({
@@ -649,85 +681,97 @@ app.post("/reset-password", async (req, res) => {
   }
 });
 
-// Place an Order
 app.post("/orders", async (req, res) => {
   const {
-    user_id, // Add user_id if required for tracking orders by user
-    product_id,
-    quantity,
+    user_id,
+    products, // Expecting a stringified array of products
     total_price,
     payment_method,
     tracking_id,
     delivery_date,
-    address, // Optional: Include if delivery requires an address
-    order_date, // Optional: Include if the order date needs to be recorded
+    address,
+    order_date,
   } = req.body;
 
-  // Validate required fields
-  if (!product_id || !quantity || !total_price || !payment_method) {
+  if (!products || !total_price || !payment_method) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
+    // Parse the products array
+    const parsedProducts = JSON.parse(products);
+
+    // Validate that all products have an `id` and `quantity`
+    for (const product of parsedProducts) {
+      if (!product.id || !product.quantity) {
+        return res.status(400).json({
+          message: `Invalid product data: ${JSON.stringify(product)}`,
+        });
+      }
+    }
+
     // Start a transaction
     await pool.query("BEGIN");
 
-    // Check product stock
-    const countQuery = "SELECT count FROM products WHERE id = $1";
-    const countResult = await pool.query(countQuery, [product_id]);
+    // Process each product
+    for (const product of parsedProducts) {
+      const { id: product_id, quantity } = product;
 
-    if (countResult.rows.length === 0) {
-      return res.status(404).json({ message: "Product not found" });
+      // Check product stock
+      const countQuery = "SELECT count FROM products WHERE id = $1";
+      const countResult = await pool.query(countQuery, [product_id]);
+
+      if (countResult.rows.length === 0) {
+        throw new Error(`Product ID ${product_id} not found`);
+      }
+
+      const currentCount = countResult.rows[0].count;
+
+      if (currentCount < quantity) {
+        throw new Error(`Insufficient stock for Product ID ${product_id}`);
+      }
+
+      // Update product stock
+      const newCount = currentCount - quantity;
+      const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
+      await pool.query(updateCountQuery, [newCount, product_id]);
+
+      // Insert the order for each product
+      const orderQuery = `
+        INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `;
+      const orderValues = [
+        user_id,
+        product_id,
+        quantity,
+        total_price,
+        payment_method,
+        tracking_id,
+        delivery_date,
+        address,
+        order_date,
+      ];
+      await pool.query(orderQuery, orderValues);
+
+      // Log low-stock warning
+      if (newCount < 5) {
+        console.log(`Warning: Product ID ${product_id} stock is low!`);
+      }
     }
-
-    const currentCount = countResult.rows[0].count;
-
-    // Validate stock availability
-    if (currentCount < quantity) {
-      return res.status(400).json({ message: "Insufficient stock for this order" });
-    }
-
-    // Update product stock
-    const newCount = currentCount - quantity;
-    const updateCountQuery = "UPDATE products SET count = $1 WHERE id = $2";
-    await pool.query(updateCountQuery, [newCount, product_id]);
-
-    // Insert the order
-    const orderQuery = `
-      INSERT INTO orders (user_id, product_id, quantity, total_price, payment_method, tracking_id, delivery_date, address, order_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *;
-    `;
-    const orderValues = [
-      user_id,
-      product_id,
-      quantity,
-      total_price,
-      payment_method,
-      tracking_id,
-      delivery_date,
-      address,
-      order_date,
-    ];
-    const orderResult = await pool.query(orderQuery, orderValues);
 
     // Commit the transaction
     await pool.query("COMMIT");
 
-    // Low-stock alert
-    if (newCount < 5) {
-      console.log(`Alert: Product ID ${product_id} stock is below threshold!`);
-    }
-
-    // Return the created order
-    res.status(201).json(orderResult.rows[0]);
+    res.status(201).json({ message: "Order placed successfully" });
   } catch (error) {
-    // Rollback the transaction on error
+    // Rollback transaction on error
     await pool.query("ROLLBACK");
     console.error("Error processing order:", error);
-    res.status(500).json({ message: "Error saving order details" });
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 // Fetch low-stock products
 app.get("/api/low-stock", async (req, res) => {
@@ -960,6 +1004,10 @@ app.put("/cart/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to update quantity" });
   }
 });
+const upload = multer({
+  storage: storage1,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5 MB
+});
 
 // Add a Product with Image Upload
 app.post("/AddProducts", (req, res) => {
@@ -1097,6 +1145,31 @@ app.get('/api/product-sales', async (req, res) => {
   } catch (error) {
     console.error("Error retrieving sales data:", error);
     res.status(500).json({ error: "Failed to retrieve sales data" });
+  }
+});
+app.get("/api/Allorders", async (req, res) => {
+  const { userId } = req.query; // Retrieve userId from query parameters
+
+  if (!userId) {
+    return res.status(400).send("User ID is required");
+  }
+  console.log(userId);
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        order_id, product_id, quantity, total_price, 
+        payment_method, tracking_id, delivery_date, order_date 
+      FROM orders
+      WHERE user_id = $1
+    `,
+      [userId] // Use parameterized queries to prevent SQL injection
+    );
+    console.log(result);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).send("Error fetching orders");
   }
 });
 

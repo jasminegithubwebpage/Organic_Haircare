@@ -20,7 +20,7 @@ import Contactus from "./pages/Contactus";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import MyCart from "./pages/MyCart";
 import ResetPasswordForm from "./pages/ResetPasswordForm";
-
+import MyOrders from "./pages/MyOrders";
 // Super Admin
 // import SADashboard from "./components/SADashboard";
 // import SALayout from "./components/SALayout";
@@ -51,7 +51,7 @@ function App() {
           <Route path="/payment-success" element={<Layout><PaymentSuccess /></Layout>} />
           <Route path="/reset" element={<Layout><ResetPasswordForm /></Layout>}/>
           <Route path="/payment" element={<Layout><PaymentForm/></Layout>} />
-
+          <Route path="/myorder" element={<Layout><MyOrders /></Layout>} />
           {/* Admin Routes */}
           {/* <Route path="/dashboard" element={<AdminLayout><Dashboard /></AdminLayout>} />
           <Route path="/dashboard/customer" element={<AdminLayout><Customers /></AdminLayout>} />

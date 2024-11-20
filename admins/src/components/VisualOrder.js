@@ -118,42 +118,78 @@ function VisualOrder() {
       <h2>Orders Dashboard</h2>
 
       {/* Filters */}
-      <div>
-        <label>Payment Method:</label>
-        <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
-          <option value="All">All</option>
-          <option value="UPI">UPI</option>
-          <option value="Pay On Delivery">Pay On Delivery</option>
-        </select>
+      <div className="p-6 bg-gray-100 rounded-lg shadow-md space-y-6">
+  {/* Payment Method Filter */}
+  <div>
+    <label className="block text-gray-700 text-sm font-bold mb-2">
+      Payment Method:
+    </label>
+    <select
+      value={paymentFilter}
+      onChange={(e) => setPaymentFilter(e.target.value)}
+      className="block w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="All">All</option>
+      <option value="UPI">UPI</option>
+      <option value="Pay On Delivery">Pay On Delivery</option>
+    </select>
+  </div>
 
-        <label>Amount Range:</label>
-        <input
-          type="number"
-          value={amountRange[0]}
-          onChange={(e) => setAmountRange([parseInt(e.target.value), amountRange[1]])}
-        />
-        <input
-          type="number"
-          value={amountRange[1]}
-          onChange={(e) => setAmountRange([amountRange[0], parseInt(e.target.value)])}
-        />
+  {/* Amount Range Filter */}
+  <div>
+    <label className="block text-gray-700 text-sm font-bold mb-2">
+      Amount Range:
+    </label>
+    <div className="flex gap-2">
+      <input
+        type="number"
+        value={amountRange[0]}
+        onChange={(e) =>
+          setAmountRange([parseInt(e.target.value), amountRange[1]])
+        }
+        className="w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Min"
+      />
+      <input
+        type="number"
+        value={amountRange[1]}
+        onChange={(e) =>
+          setAmountRange([amountRange[0], parseInt(e.target.value)])
+        }
+        className="w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Max"
+      />
+    </div>
+  </div>
 
-        <label>Delivery Date Range:</label>
-        <DatePicker
-          selected={dateRange[0]}
-          onChange={(date) => setDateRange([date, dateRange[1]])}
-          selectsStart
-          startDate={dateRange[0]}
-          endDate={dateRange[1]}
-        />
-        <DatePicker
-          selected={dateRange[1]}
-          onChange={(date) => setDateRange([dateRange[0], date])}
-          selectsEnd
-          startDate={dateRange[0]}
-          endDate={dateRange[1]}
-        />
-      </div>
+  {/* Delivery Date Range Filter */}
+  <div>
+    <label className="block text-gray-700 text-sm font-bold mb-2">
+      Delivery Date Range:
+    </label>
+    <div className="flex gap-2">
+      <DatePicker
+        selected={dateRange[0]}
+        onChange={(date) => setDateRange([date, dateRange[1]])}
+        selectsStart
+        startDate={dateRange[0]}
+        endDate={dateRange[1]}
+        className="w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholderText="Start Date"
+      />
+      <DatePicker
+        selected={dateRange[1]}
+        onChange={(date) => setDateRange([dateRange[0], date])}
+        selectsEnd
+        startDate={dateRange[0]}
+        endDate={dateRange[1]}
+        className="w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholderText="End Date"
+      />
+    </div>
+  </div>
+</div>
+
 
       {/* Charts */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>

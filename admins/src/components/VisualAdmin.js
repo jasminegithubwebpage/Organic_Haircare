@@ -104,7 +104,7 @@ function VisualAdmin() {
 
     return (
         <div style={{ padding: "2rem" }}>
-            <h2>Data Visualization Dashboard</h2>
+            <h2>Users Report</h2>
 
             <div style={{ marginBottom: "1rem" }}>
                 <label>

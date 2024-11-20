@@ -1,17 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../pages/UserContext";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+  const { user } = useUser();
+  const userId = user?.id;
   useEffect(() => {
     const fetchOrders = async () => {
+      if (!userId) {
+        console.error("User ID not available");
+        return;
+      }
+
       try {
-        const response = await fetch("/api/Allorders"); // Your API endpoint
+        const response = await fetch(`/api/Allorders?userId=${userId}`); // Pass userId as a query parameter
         if (response.ok) {
           const data = await response.json();
+          console.lod(data);
           setOrders(data); // Assuming the API returns an array of orders
         } else {
           console.error("Failed to fetch orders");
@@ -24,7 +32,7 @@ function MyOrders() {
     };
 
     fetchOrders();
-  }, []);
+  }, [userId]);
 
   const handleOrderClick = (orderId) => {
     navigate(`/orders/${orderId}`); // Navigate to order details page
