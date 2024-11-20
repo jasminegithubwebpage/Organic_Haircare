@@ -130,13 +130,13 @@ app.get("/products/filter", async (req, res) => {
 
   // Handle Ingredient Filter
   if (ingredient) {
-    conditions.push("$1 = ANY(pi.ingredient)");
+    conditions.push(`$1 = ANY(pi.ingredient)`); // Filtering within the `product_ingredients` table
     params.push(ingredient);
   }
 
   // Handle Hair Problem Filter
   if (hairProblem) {
-    conditions.push(`p.hair_problem = $${params.length + 1}`);
+    conditions.push(`p.hair_problem = $${params.length + 1}`); // Filtering within the `products` table
     params.push(hairProblem);
   }
 
@@ -180,6 +180,7 @@ app.get("/products/filter", async (req, res) => {
     res.status(500).json({ error: "Unable to filter products." });
   }
 });
+
 
 
 

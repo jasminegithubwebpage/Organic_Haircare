@@ -56,9 +56,10 @@ function Product() {
 
     if (hairProblem) {
       filtered = filtered.filter((product) =>
-        product.hairProblem === hairProblem
+        product.hair_problem === hairProblem
       );
     }
+    
 
     if (priceRange) {
       const [min, max] = priceRange.split('-');
@@ -69,12 +70,13 @@ function Product() {
       );
     }
 
-    if (ingredient) {
-      filtered = filtered.filter((product) =>
-        product.ingredients && product.ingredients.includes(ingredient)
-      );
-    }
-
+  // Apply Ingredient Filter
+  if (ingredient) {
+    filtered = filtered.filter((product) =>
+      product.ingredient && product.ingredient.includes(ingredient)
+    );
+  }
+    
     setFilteredProducts(filtered);
   };
 
@@ -117,16 +119,18 @@ function Product() {
           className="px-4 py-2 border rounded-2xl w-1/2"
         />
 
-        <select
-          value={hairProblem}
-          onChange={handleHairProblemChange}
-          className="px-4 py-2 border rounded-md"
-        >
-          <option value="">Filter by Hair Problem</option>
-          <option value="Dryness">Dry Hair</option>
-          <option value="Dandruff">Dandruff</option>
-          <option value="Hair Loss">Hair Loss</option>
-        </select>
+<select
+  value={hairProblem}
+  onChange={handleHairProblemChange}
+  className="px-4 py-2 border rounded-md"
+>
+  <option value="">Filter by Hair Problem</option>
+  <option value="Hair Loss">Hair Loss</option>
+  <option value="Dandruff">Dandruff</option>
+  <option value="Dry Hair">Dry Hair</option>
+  <option value="Oily Scalp">Oily Scalp</option>
+  <option value="Split Ends">Split Ends</option>
+</select>
 
         <select
           value={priceRange}
@@ -141,15 +145,18 @@ function Product() {
         </select>
 
         <select
-          value={ingredient}
-          onChange={handleIngredientChange}
-          className="px-4 py-2 border rounded-md"
-        >
-          <option value="">Filter by Ingredient</option>
-          <option value="Argan Oil">Argan Oil</option>
-          <option value="Coconut Oil">Coconut Oil</option>
-          <option value="Tea Tree Oil">Tea Tree Oil</option>
-        </select>
+  value={ingredient}
+  onChange={handleIngredientChange}
+  className="px-4 py-2 border rounded-md"
+>
+  <option value="">Filter by Ingredient</option>
+  <option value="Argan Oil">Argan Oil</option>
+  <option value="Coconut Oil">Coconut Oil</option>
+  <option value="Tea Tree Oil">Tea Tree Oil</option>
+  <option value="Vitamin E">Vitamin E</option>
+  <option value="Peppermint Oil">Peppermint Oil</option>
+</select>
+
       </div>
 
       {/* Product Cards */}
